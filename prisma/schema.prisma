@@ -32,6 +32,7 @@ model User {
   transactions  Transaction[]
   courses       Course[]
   wishlist      WishlistItem[]
+  debts         Debt[]
 
   @@index([clerkId])
 }
@@ -233,6 +234,22 @@ model WishlistItem {
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+// ==========================================
+// DEBT TRACKING (PIUTANG)
+// ==========================================
+model Debt {
+  id          String   @id @default(cuid())
+  contactName String
+  amount      Float
+  notes       String?
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@index([userId])
 }
