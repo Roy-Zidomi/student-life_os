@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { auth } from "@clerk/nextjs/server";
 import {
   CheckSquare,
   Calendar,
@@ -27,7 +28,9 @@ const features = [
   { icon: Bot, title: "AI Assistant", description: "Asisten AI yang memahami datamu.", color: "from-fuchsia-500 to-pink-500" },
 ];
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const { userId } = await auth();
+
   return (
     <div className="relative min-h-screen overflow-hidden">
       {/* Background Effects */}
@@ -50,17 +53,28 @@ export default function LandingPage() {
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/sign-in">
-              <Button variant="ghost" className="text-sm">
-                Masuk
-              </Button>
-            </Link>
-            <Link href="/sign-up">
-              <Button className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 shadow-lg shadow-indigo-500/25 text-sm">
-                Daftar Gratis
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Button>
-            </Link>
+            {userId ? (
+              <Link href="/dashboard">
+                <Button className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 shadow-lg shadow-indigo-500/25 text-sm">
+                  Dashboard
+                  <ArrowRight className="ml-1 h-4 w-4" />
+                </Button>
+              </Link>
+            ) : (
+              <>
+                <Link href="/sign-in">
+                  <Button variant="ghost" className="text-sm">
+                    Masuk
+                  </Button>
+                </Link>
+                <Link href="/sign-up">
+                  <Button className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 shadow-lg shadow-indigo-500/25 text-sm">
+                    Daftar Gratis
+                    <ArrowRight className="ml-1 h-4 w-4" />
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </nav>
 
@@ -87,24 +101,38 @@ export default function LandingPage() {
           </p>
 
           <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-            <Link href="/sign-up">
-              <Button
-                size="lg"
-                className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 shadow-xl shadow-indigo-500/25 text-base px-8 h-12"
-              >
-                Mulai Sekarang — Gratis
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-            <Link href="/sign-in">
-              <Button
-                size="lg"
-                variant="outline"
-                className="text-base px-8 h-12 border-border/50"
-              >
-                Sudah Punya Akun? Masuk
-              </Button>
-            </Link>
+            {userId ? (
+              <Link href="/dashboard">
+                <Button
+                  size="lg"
+                  className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 shadow-xl shadow-indigo-500/25 text-base px-8 h-12"
+                >
+                  Masuk ke Dashboard
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            ) : (
+              <>
+                <Link href="/sign-up">
+                  <Button
+                    size="lg"
+                    className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 shadow-xl shadow-indigo-500/25 text-base px-8 h-12"
+                  >
+                    Mulai Sekarang — Gratis
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link href="/sign-in">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="text-base px-8 h-12 border-border/50"
+                  >
+                    Sudah Punya Akun? Masuk
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </section>
 
@@ -153,12 +181,12 @@ export default function LandingPage() {
             <p className="mt-3 text-muted-foreground text-lg">
               Bergabung sekarang dan rasakan kemudahan mengelola kehidupan akademik.
             </p>
-            <Link href="/sign-up">
+            <Link href={userId ? "/dashboard" : "/sign-up"}>
               <Button
                 size="lg"
                 className="mt-8 bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 shadow-xl shadow-indigo-500/25 text-base px-8 h-12"
               >
-                Daftar Gratis Sekarang
+                {userId ? "Pergi ke Dashboard" : "Daftar Gratis Sekarang"}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
