@@ -173,15 +173,15 @@ export default function GPAPageClient({
             <CardTitle className="text-sm">IPS per Semester</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-end gap-4 h-40">
+            <div className="flex items-end justify-center gap-8 h-28 max-w-2xl mx-auto">
               {stats.semesterGPA.map((s) => (
-                <div key={s.semester} className="flex flex-col items-center flex-1">
+                <div key={s.semester} className="flex flex-col items-center w-12">
                   <span className="text-xs font-bold mb-1">{s.gpa.toFixed(2)}</span>
                   <div
-                    className="w-full rounded-t-md bg-gradient-to-t from-indigo-600 to-indigo-400 transition-all"
+                    className="w-full rounded-t-md bg-gradient-to-t from-indigo-500 to-purple-600 transition-all shadow-md shadow-indigo-500/10"
                     style={{ height: `${(s.gpa / 4) * 100}%` }}
                   />
-                  <span className="text-xs text-muted-foreground mt-2">Sem {s.semester}</span>
+                  <span className="text-xs text-muted-foreground mt-2 font-medium">Sem {s.semester}</span>
                 </div>
               ))}
             </div>
