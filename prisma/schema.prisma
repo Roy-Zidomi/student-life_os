@@ -1,0 +1,220 @@
+// Student Life OS - Prisma Schema
+// Database: PostgreSQL
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ==========================================
+// USER - synced from Clerk
+// ==========================================
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  email     String   @unique
+  name      String?
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tasks         Task[]
+  events        Event[]
+  notes         Note[]
+  studySessions StudySession[]
+  habits        Habit[]
+  habitLogs     HabitLog[]
+  transactions  Transaction[]
+  courses       Course[]
+
+  @@index([clerkId])
+}
+
+// ==========================================
+// TASK MANAGEMENT
+// ==========================================
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
+model Task {
+  id          String     @id @default(cuid())
+  title       String
+  description String?
+  priority    Priority   @default(MEDIUM)
+  status      TaskStatus @default(TODO)
+  deadline    DateTime?
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([userId])
+  @@index([deadline])
+  @@index([status])
+}
+
+// ==========================================
+// CALENDAR / EVENTS
+// ==========================================
+enum EventType {
+  CLASS
+  EXAM
+  PRESENTATION
+  MEETING
+  OTHER
+}
+
+model Event {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  location    String?
+  type        EventType @default(OTHER)
+  startDate   DateTime
+  endDate     DateTime
+  color       String?   @default("#6366f1")
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([startDate])
+  @@index([endDate])
+}
+
+// ==========================================
+// NOTES
+// ==========================================
+model Note {
+  id        String   @id @default(cuid())
+  title     String
+  content   String?  @db.Text
+  isPinned  Boolean  @default(false)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// ==========================================
+// STUDY SESSIONS (Pomodoro)
+// ==========================================
+model StudySession {
+  id        String   @id @default(cuid())
+  subject   String
+  duration  Int      // duration in minutes
+  date      DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([date])
+}
+
+// ==========================================
+// HABITS
+// ==========================================
+model Habit {
+  id        String     @id @default(cuid())
+  name      String
+  icon      String?    @default("✅")
+  color     String?    @default("#6366f1")
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logs      HabitLog[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([userId])
+}
+
+model HabitLog {
+  id        String   @id @default(cuid())
+  date      DateTime
+  completed Boolean  @default(true)
+  habitId   String
+  habit     Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([habitId, date])
+  @@index([userId])
+  @@index([date])
+}
+
+// ==========================================
+// FINANCE / TRANSACTIONS
+// ==========================================
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+enum TransactionCategory {
+  // Expenses
+  FOOD
+  TRANSPORTATION
+  EDUCATION
+  ENTERTAINMENT
+  HEALTH
+  // Income
+  SCHOLARSHIP
+  SALARY
+  ALLOWANCE
+  FREELANCE
+  // Other
+  OTHER
+}
+
+model Transaction {
+  id          String              @id @default(cuid())
+  description String
+  amount      Float
+  type        TransactionType
+  category    TransactionCategory @default(OTHER)
+  date        DateTime            @default(now())
+  userId      String
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@index([userId])
+  @@index([date])
+  @@index([type])
+}
+
+// ==========================================
+// GPA / COURSES
+// ==========================================
+model Course {
+  id        String   @id @default(cuid())
+  name      String
+  credits   Int      // SKS
+  grade     String?  // A, AB, B, BC, C, D, E
+  gradePoint Float?  // 4.0, 3.5, 3.0, 2.5, 2.0, 1.0, 0.0
+  semester  Int      @default(1)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([semester])
+}
