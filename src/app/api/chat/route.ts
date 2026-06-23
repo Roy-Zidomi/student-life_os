@@ -1,5 +1,5 @@
 import { google } from "@ai-sdk/google";
-import { streamText } from "ai";
+import { streamText, convertToModelMessages } from "ai";
 import { prisma } from "@/lib/prisma";
 import { ensureUser } from "@/lib/user";
 
@@ -9,6 +9,9 @@ export async function POST(req: Request) {
   try {
     const user = await ensureUser();
     const { messages } = await req.json();
+
+    // Convert UI messages to model messages (required in Vercel AI SDK v6)
+    const modelMessages = await convertToModelMessages(messages);
 
     // Fetch user context in parallel
     const [tasks, transactions, courses, habits] = await Promise.all([
@@ -84,7 +87,7 @@ Pedoman menjawab:
     const result = streamText({
       model: google("gemini-2.0-flash"),
       system: systemPrompt,
-      messages,
+      messages: modelMessages,
     });
 
     return result.toUIMessageStreamResponse();
