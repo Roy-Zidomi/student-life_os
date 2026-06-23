@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +19,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import Link from "next/link";
+import { Textarea } from "@/components/ui/textarea";
 
 interface NoteItem {
   id: string;
@@ -30,10 +32,12 @@ interface NoteItem {
 
 export default function NotesPageClient({ initialNotes }: { initialNotes: NoteItem[] }) {
   const [notes, setNotes] = useState<NoteItem[]>(initialNotes);
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
 
   const filteredNotes = notes.filter((note) => {
     if (search && !note.title.toLowerCase().includes(search.toLowerCase())) return false;
@@ -50,12 +54,14 @@ export default function NotesPageClient({ initialNotes }: { initialNotes: NoteIt
     }
     startTransition(async () => {
       try {
-        const result = await createNote({ title: title.trim(), content: "" });
+        const result = await createNote({ title: title.trim(), content: content.trim() });
         if (result.success && result.data) {
           setNotes((prev) => [result.data as NoteItem, ...prev]);
           toast.success("Catatan berhasil dibuat");
           setDialogOpen(false);
           setTitle("");
+          setContent("");
+          router.push(`/notes/${result.data.id}`);
         }
       } catch {
         toast.error("Gagal membuat catatan");
@@ -141,7 +147,11 @@ export default function NotesPageClient({ initialNotes }: { initialNotes: NoteIt
             <div className="space-y-4 pt-4">
               <div className="space-y-2">
                 <Label>Judul *</Label>
-                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Judul catatan..." onKeyDown={(e) => e.key === "Enter" && handleCreate()} />
+                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Judul catatan..." />
+              </div>
+              <div className="space-y-2">
+                <Label>Isi Catatan</Label>
+                <Textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Tulis isi catatan Anda di sini..." className="min-h-[150px]" />
               </div>
               <Button onClick={handleCreate} disabled={isPending} className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
                 {isPending ? "Membuat..." : "Buat Catatan"}
