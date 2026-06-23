@@ -43,6 +43,7 @@ export default function GPAPageClient({
   const [stats, setStats] = useState<GPAStatsData>(initialStats);
   const [isPending, startTransition] = useTransition();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedSemester, setSelectedSemester] = useState<string>("all");
 
   const [name, setName] = useState("");
   const [credits, setCredits] = useState("3");
@@ -188,8 +189,32 @@ export default function GPAPageClient({
         </Card>
       )}
 
+      {/* Semester Filter Bar */}
+      {courses.length > 0 && (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-2 pt-4">
+          <h2 className="text-lg font-bold tracking-tight">Daftar Mata Kuliah</h2>
+          <div className="flex items-center gap-2">
+            <Label className="text-xs text-muted-foreground">Filter Semester:</Label>
+            <Select value={selectedSemester} onValueChange={(val) => setSelectedSemester(val || "all")}>
+              <SelectTrigger className="w-[180px] h-9 bg-card border-border/50 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Semester</SelectItem>
+                {semesters.map((sem) => (
+                  <SelectItem key={sem} value={sem.toString()}>Semester {sem}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      )}
+
       {/* Courses by Semester */}
-      {semesters.map((sem) => (
+      {(selectedSemester === "all"
+        ? semesters
+        : semesters.filter((sem) => sem.toString() === selectedSemester)
+      ).map((sem) => (
         <Card key={sem} className="border-border/50 bg-card/50">
           <CardHeader>
             <CardTitle className="text-sm">Semester {sem}</CardTitle>
