@@ -11,8 +11,8 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, GraduationCap, TrendingUp } from "lucide-react";
-import { createCourse, deleteCourse } from "@/actions/gpa.actions";
+import { Plus, Trash2, GraduationCap, TrendingUp, Pencil } from "lucide-react";
+import { createCourse, deleteCourse, updateCourse } from "@/actions/gpa.actions";
 import { toast } from "sonner";
 import { GRADE_OPTIONS, GRADE_MAP } from "@/lib/constants";
 
@@ -46,6 +46,33 @@ export default function GPAPageClient({
   const [selectedSemester, setSelectedSemester] = useState<string>("all");
 
   const [name, setName] = useState("");
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState<CourseItem | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editCredits, setEditCredits] = useState("3");
+  const [editGrade, setEditGrade] = useState("");
+  const [editSemester, setEditSemester] = useState("1");
+
+  const handleEditSubmit = () => {
+    if (!selectedCourse) return;
+    if (!editName.trim()) { toast.error("Nama mata kuliah wajib diisi"); return; }
+    startTransition(async () => {
+      try {
+        const result = await updateCourse(selectedCourse.id, {
+          name: editName.trim(),
+          credits: Number(editCredits),
+          grade: editGrade || undefined,
+          semester: Number(editSemester),
+        });
+        if (result.success && result.data) {
+          setCourses((prev) => prev.map((c) => c.id === selectedCourse.id ? result.data as CourseItem : c));
+          toast.success("Mata kuliah berhasil diperbarui");
+          setEditDialogOpen(false);
+          window.location.reload();
+        }
+      } catch { toast.error("Gagal memperbarui mata kuliah"); }
+    });
+  };
   const [credits, setCredits] = useState("3");
   const [grade, setGrade] = useState("");
   const [semester, setSemester] = useState("1");
@@ -238,6 +265,21 @@ export default function GPAPageClient({
                   ) : (
                     <span className="text-xs text-muted-foreground">Belum ada nilai</span>
                   )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground"
+                    onClick={() => {
+                      setSelectedCourse(course);
+                      setEditName(course.name);
+                      setEditCredits(course.credits.toString());
+                      setEditGrade(course.grade || "");
+                      setEditSemester(course.semester.toString());
+                      setEditDialogOpen(true);
+                    }}
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </Button>
                   <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 text-destructive" onClick={() => handleDelete(course.id)}>
                     <Trash2 className="h-3 w-3" />
                   </Button>
@@ -257,6 +299,44 @@ export default function GPAPageClient({
           </div>
         </Card>
       )}
+      {/* Edit Course Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={(open) => { setEditDialogOpen(open); if (!open) setSelectedCourse(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Mata Kuliah</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <div className="space-y-2">
+              <Label>Nama Mata Kuliah *</Label>
+              <Input value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="Contoh: Algoritma & Pemrograman" />
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label>SKS</Label>
+                <Input type="number" value={editCredits} onChange={(e) => setEditCredits(e.target.value)} min="1" max="8" />
+              </div>
+              <div className="space-y-2">
+                <Label>Nilai</Label>
+                <Select value={editGrade} onValueChange={(val) => setEditGrade(val || "")}>
+                  <SelectTrigger><SelectValue placeholder="-" /></SelectTrigger>
+                  <SelectContent>
+                    {GRADE_OPTIONS.map((g) => (
+                      <SelectItem key={g} value={g}>{g} ({GRADE_MAP[g]})</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Semester</Label>
+                <Input type="number" value={editSemester} onChange={(e) => setEditSemester(e.target.value)} min="1" max="14" />
+              </div>
+            </div>
+            <Button onClick={handleEditSubmit} disabled={isPending} className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+              {isPending ? "Menyimpan..." : "Simpan Perubahan"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

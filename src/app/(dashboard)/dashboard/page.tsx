@@ -10,6 +10,10 @@ import {
   ListTodo,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getGPAStats } from "@/actions/gpa.actions";
+import { getTasks } from "@/actions/task.actions";
+import { getFinanceStats } from "@/actions/finance.actions";
+import { getStudyStats } from "@/actions/study.actions";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -49,7 +53,34 @@ function StatCard({
   );
 }
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const [gpaStats, tasks, financeStats, studyStats] = await Promise.all([
+    getGPAStats(),
+    getTasks(),
+    getFinanceStats(),
+    getStudyStats(),
+  ]);
+
+  // Tasks math
+  const totalTasks = tasks.length;
+  const completedTasks = tasks.filter((t) => t.status === "DONE").length;
+  const taskPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+  // Study hours math
+  const studyHoursThisWeek = (studyStats.weekMinutes / 60).toFixed(1);
+
+  // GPA math
+  const latestIPS = gpaStats.semesterGPA.length > 0 
+    ? gpaStats.semesterGPA[gpaStats.semesterGPA.length - 1].gpa 
+    : 0;
+  const currentSemester = gpaStats.semesterGPA.length > 0 
+    ? Math.max(...gpaStats.semesterGPA.map((s) => s.semester)) 
+    : 1;
+
+  // Format rupiah
+  const formatRupiah = (amount: number) =>
+    new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(amount);
+
   return (
     <div className="space-y-8">
       {/* Page Header */}
@@ -66,15 +97,15 @@ export default function DashboardPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Tugas Selesai"
-          value="12/20"
-          subtitle="60% minggu ini"
+          value={`${completedTasks}/${totalTasks}`}
+          subtitle={`${taskPercentage}% selesai`}
           icon={CheckCircle2}
           gradient="bg-gradient-to-br from-emerald-500 to-emerald-600"
         />
         <StatCard
           title="Jam Belajar"
-          value="18.5 jam"
-          subtitle="+2.5 jam dari minggu lalu"
+          value={`${studyHoursThisWeek} jam`}
+          subtitle="Minggu ini"
           icon={Clock}
           gradient="bg-gradient-to-br from-blue-500 to-blue-600"
         />
@@ -87,7 +118,7 @@ export default function DashboardPage() {
         />
         <StatCard
           title="Pengeluaran Bulan Ini"
-          value="Rp 850.000"
+          value={formatRupiah(financeStats.totalExpense)}
           subtitle="Budget: Rp 1.500.000"
           icon={Wallet}
           gradient="bg-gradient-to-br from-purple-500 to-purple-600"
@@ -180,8 +211,8 @@ export default function DashboardPage() {
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
               {[
-                { label: "Tugas Selesai", value: "12", total: "20", percentage: 60 },
-                { label: "Jam Belajar", value: "18.5", total: "25", percentage: 74 },
+                { label: "Tugas Selesai", value: `${completedTasks}`, total: `${totalTasks}`, percentage: taskPercentage },
+                { label: "Jam Belajar", value: `${studyHoursThisWeek}`, total: "25", percentage: Math.min(100, Math.round((Number(studyHoursThisWeek) / 25) * 100)) },
                 { label: "Kebiasaan Hari Ini", value: "4", total: "5", percentage: 80 },
                 { label: "Target Mingguan", value: "75%", total: "", percentage: 75 },
               ].map((item, i) => (
@@ -220,7 +251,7 @@ export default function DashboardPage() {
               <div className="flex flex-col items-center">
                 <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-indigo-500/20">
                   <span className="text-2xl font-bold bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">
-                    3.65
+                    {gpaStats.cumulativeGPA.toFixed(2)}
                   </span>
                 </div>
                 <span className="text-xs text-muted-foreground mt-2">IPK Saat Ini</span>
@@ -228,15 +259,15 @@ export default function DashboardPage() {
               <div className="flex-1 space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">IPS Semester Ini</span>
-                  <span className="font-medium">3.75</span>
+                  <span className="font-medium">{latestIPS.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Total SKS</span>
-                  <span className="font-medium">96 SKS</span>
+                  <span className="font-medium">{gpaStats.totalCredits} SKS</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Semester</span>
-                  <span className="font-medium">5</span>
+                  <span className="font-medium">{currentSemester}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Target IPK</span>
