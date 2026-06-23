@@ -127,8 +127,10 @@ export default function AIAssistantPage() {
                     <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
                     <div>
                       <p className="font-semibold mb-1">Gagal Mendapatkan Respon AI</p>
-                      <p className="text-xs opacity-90 leading-relaxed">
-                        {error.message || "Batas kuota gratis (Free Tier) dari Gemini API Key Anda mungkin telah habis. Silakan periksa limit/kuota API Key Anda di Google AI Studio atau coba lagi beberapa saat lagi."}
+                      <p className="text-xs opacity-90 leading-relaxed font-medium">
+                        {error.message && error.message !== "An error occurred."
+                          ? error.message
+                          : "Batas kuota gratis (Free Tier) dari Gemini API Key Anda telah habis atau API Key tidak valid. Silakan periksa limit/kuota API Key Anda di Google AI Studio atau perbarui GOOGLE_GENERATIVE_AI_API_KEY Anda di file .env."}
                       </p>
                     </div>
                   </div>
