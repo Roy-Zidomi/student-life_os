@@ -30,6 +30,7 @@ model User {
   habitLogs     HabitLog[]
   transactions  Transaction[]
   courses       Course[]
+  wishlist      WishlistItem[]
 
   @@index([clerkId])
 }
@@ -217,4 +218,21 @@ model Course {
 
   @@index([userId])
   @@index([semester])
+}
+
+// ==========================================
+// WISHLIST / SAVINGS TARGETS
+// ==========================================
+model WishlistItem {
+  id          String   @id @default(cuid())
+  name        String
+  targetPrice Float
+  savedAmount Float    @default(0)
+  isCompleted Boolean  @default(false)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
 }
