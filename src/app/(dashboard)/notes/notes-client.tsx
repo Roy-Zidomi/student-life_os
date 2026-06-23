@@ -13,8 +13,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Plus, Search, Pin, PinOff, Trash2, FileText, Clock } from "lucide-react";
-import { createNote, deleteNote, togglePinNote } from "@/actions/note.actions";
+import { Plus, Search, Pin, PinOff, Trash2, FileText, Clock, Pencil } from "lucide-react";
+import { createNote, deleteNote, togglePinNote, updateNote } from "@/actions/note.actions";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
@@ -38,6 +38,38 @@ export default function NotesPageClient({ initialNotes }: { initialNotes: NoteIt
   const [dialogOpen, setDialogOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+
+  // Edit dialog states
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedNote, setSelectedNote] = useState<NoteItem | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editContent, setEditContent] = useState("");
+
+  const handleEditSubmit = () => {
+    if (!selectedNote) return;
+    if (!editTitle.trim()) {
+      toast.error("Judul catatan wajib diisi");
+      return;
+    }
+    startTransition(async () => {
+      try {
+        const result = await updateNote(selectedNote.id, {
+          title: editTitle.trim(),
+          content: editContent.trim(),
+        });
+        if (result.success && result.data) {
+          setNotes((prev) =>
+            prev.map((n) => (n.id === selectedNote.id ? (result.data as NoteItem) : n))
+          );
+          toast.success("Catatan berhasil diperbarui");
+          setEditDialogOpen(false);
+          setSelectedNote(null);
+        }
+      } catch {
+        toast.error("Gagal memperbarui catatan");
+      }
+    });
+  };
 
   const filteredNotes = notes.filter((note) => {
     if (search && !note.title.toLowerCase().includes(search.toLowerCase())) return false;
@@ -109,6 +141,19 @@ export default function NotesPageClient({ initialNotes }: { initialNotes: NoteIt
             </p>
           </Link>
           <div className="flex items-center gap-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-foreground"
+              onClick={() => {
+                setSelectedNote(note);
+                setEditTitle(note.title);
+                setEditContent(note.content || "");
+                setEditDialogOpen(true);
+              }}
+            >
+              <Pencil className="h-3 w-3" />
+            </Button>
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleTogglePin(note.id)}>
               {note.isPinned ? <PinOff className="h-3 w-3" /> : <Pin className="h-3 w-3" />}
             </Button>
@@ -202,6 +247,28 @@ export default function NotesPageClient({ initialNotes }: { initialNotes: NoteIt
           </Card>
         ) : null}
       </div>
+
+      {/* Edit Note Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={(open) => { setEditDialogOpen(open); if (!open) setSelectedNote(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Catatan</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <div className="space-y-2">
+              <Label>Judul *</Label>
+              <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} placeholder="Judul catatan..." />
+            </div>
+            <div className="space-y-2">
+              <Label>Isi Catatan</Label>
+              <Textarea value={editContent} onChange={(e) => setEditContent(e.target.value)} placeholder="Tulis isi catatan Anda di sini..." className="min-h-[150px]" />
+            </div>
+            <Button onClick={handleEditSubmit} disabled={isPending} className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+              {isPending ? "Menyimpan..." : "Simpan Perubahan"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
