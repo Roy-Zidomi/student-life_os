@@ -71,6 +71,7 @@ export const NAV_ITEMS = [
   { href: "/study", label: "Belajar", icon: "Timer" },
   { href: "/habits", label: "Kebiasaan", icon: "Target" },
   { href: "/finance", label: "Keuangan", icon: "Wallet" },
+  { href: "/wishlist", label: "Wishlist", icon: "Heart" },
   { href: "/gpa", label: "IPK", icon: "GraduationCap" },
   { href: "/analytics", label: "Analitik", icon: "BarChart3" },
   { href: "/ai-assistant", label: "AI Assistant", icon: "Bot" },

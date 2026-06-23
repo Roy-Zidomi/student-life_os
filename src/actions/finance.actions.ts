@@ -137,3 +137,15 @@ export async function getFinanceStats(month?: Date) {
     categoryBreakdown,
   };
 }
+
+export async function updateInitialBalance(amount: number) {
+  const user = await ensureUser();
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { initialBalance: amount },
+  });
+  revalidatePath("/finance");
+  revalidatePath("/dashboard");
+  revalidatePath("/wishlist");
+  return { success: true };
+}

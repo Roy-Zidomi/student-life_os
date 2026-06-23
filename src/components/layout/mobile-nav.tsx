@@ -17,6 +17,7 @@ import {
   Bot,
   Menu,
   Sparkles,
+  Heart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,6 +39,7 @@ const iconMap: Record<string, React.ElementType> = {
   GraduationCap,
   BarChart3,
   Bot,
+  Heart,
 };
 
 export function MobileNav() {
