@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { ensureUser } from "@/lib/user";
 import { taskSchema } from "@/validators/task.schema";
 import { revalidatePath } from "next/cache";
-import type { Priority, TaskStatus } from "@/generated/prisma/client";
+import type { Priority, TaskStatus } from "@prisma/client";
 
 export async function getTasks(filters?: {
   status?: TaskStatus;
