@@ -94,10 +94,10 @@ export default async function LandingPage() {
 
           <div className="mt-6 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto px-4 sm:px-0 justify-center">
             {userId ? (
-              <Link href="/dashboard" className="w-full sm:w-auto">
+              <Link href="/dashboard" className="w-full sm:w-auto block">
                 <Button
                   size="lg"
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm text-sm sm:text-base px-8 h-10 sm:h-12 w-full"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm text-sm sm:text-base px-4 sm:px-8 h-10 sm:h-12 w-full"
                 >
                   Masuk ke Dashboard
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -105,20 +105,20 @@ export default async function LandingPage() {
               </Link>
             ) : (
               <>
-                <Link href="/sign-up" className="w-full sm:w-auto">
+                <Link href="/sign-up" className="w-full sm:w-auto block">
                   <Button
                     size="lg"
-                    className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm text-sm sm:text-base px-8 h-10 sm:h-12 w-full"
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm text-sm sm:text-base px-4 sm:px-8 h-10 sm:h-12 w-full"
                   >
                     Mulai Sekarang — Gratis
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
-                <Link href="/sign-in" className="w-full sm:w-auto">
+                <Link href="/sign-in" className="w-full sm:w-auto block">
                   <Button
                     size="lg"
                     variant="outline"
-                    className="text-sm sm:text-base px-8 h-10 sm:h-12 border-border/50 w-full"
+                    className="text-sm sm:text-base px-4 sm:px-8 h-10 sm:h-12 border-border/50 w-full"
                   >
                     Sudah Punya Akun? Masuk
                   </Button>
@@ -166,17 +166,17 @@ export default async function LandingPage() {
 
         {/* CTA */}
         <section className="px-6 pb-24 md:px-12">
-          <div className="mx-auto max-w-4xl rounded-2xl border border-primary/20 bg-primary/5 p-12 text-center backdrop-blur-sm">
-            <h2 className="text-3xl font-bold tracking-tight">
+          <div className="mx-auto max-w-4xl rounded-2xl border border-primary/20 bg-primary/5 p-6 sm:p-12 text-center backdrop-blur-sm">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
               Siap Meningkatkan Produktivitasmu?
             </h2>
-            <p className="mt-3 text-muted-foreground text-lg">
+            <p className="mt-3 text-muted-foreground text-sm sm:text-lg">
               Bergabung sekarang dan rasakan kemudahan mengelola kehidupan akademik.
             </p>
-            <Link href={userId ? "/dashboard" : "/sign-up"}>
+            <Link href={userId ? "/dashboard" : "/sign-up"} className="inline-block mt-8 w-full sm:w-auto">
               <Button
                 size="lg"
-                className="mt-8 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm text-base px-8 h-12"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm text-sm sm:text-base px-4 sm:px-8 h-10 sm:h-12 w-full"
               >
                 {userId ? "Pergi ke Dashboard" : "Daftar Gratis Sekarang"}
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -187,8 +187,8 @@ export default async function LandingPage() {
 
         {/* Footer */}
         <footer className="border-t border-border/50 px-6 py-8 md:px-12">
-          <div className="mx-auto flex max-w-6xl items-center justify-between">
-            <div className="flex items-center gap-2">
+          <div className="mx-auto flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between text-center sm:text-left">
+            <div className="flex items-center justify-center sm:justify-start gap-2">
               <Sparkles className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium text-muted-foreground">
                 Student Life OS
