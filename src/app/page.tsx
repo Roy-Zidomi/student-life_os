@@ -42,35 +42,35 @@ export default async function LandingPage() {
 
       <div className="relative z-10">
         {/* Navbar */}
-        <nav className="flex items-center justify-between px-6 py-4 md:px-12">
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/25">
-              <Sparkles className="h-4.5 w-4.5 text-white" />
+        <nav className="flex items-center justify-between px-4 py-3 md:px-12 md:py-4">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/25">
+              <Sparkles className="h-4 w-4 sm:h-4.5 sm:w-4.5 text-white" />
             </div>
-            <span className="text-xl font-bold tracking-tight text-foreground">
+            <span className="text-lg sm:text-xl font-bold tracking-tight text-foreground">
               StudentOS
             </span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3">
             {userId ? (
               <Link href="/dashboard">
-                <Button className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm text-sm">
+                <Button className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm text-xs sm:text-sm h-8 sm:h-9 px-3 sm:px-4">
                   Dashboard
-                  <ArrowRight className="ml-1 h-4 w-4" />
+                  <ArrowRight className="ml-1 h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </Button>
               </Link>
             ) : (
               <>
                 <Link href="/sign-in">
-                  <Button variant="ghost" className="text-sm">
+                  <Button variant="ghost" className="text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3">
                     Masuk
                   </Button>
                 </Link>
                 <Link href="/sign-up">
-                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm text-sm">
-                  Daftar Gratis
-                  <ArrowRight className="ml-1 h-4 w-4" />
-                </Button>
+                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm text-xs sm:text-sm h-8 sm:h-9 px-3 sm:px-4">
+                    Daftar Gratis
+                    <ArrowRight className="ml-1 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  </Button>
                 </Link>
               </>
             )}
@@ -78,8 +78,8 @@ export default async function LandingPage() {
         </nav>
 
         {/* Hero */}
-        <section className="flex flex-col items-center px-6 pt-20 pb-16 text-center md:pt-32 md:pb-24">
-          <h1 className="max-w-4xl text-4xl font-bold tracking-tight md:text-6xl lg:text-7xl">
+        <section className="flex flex-col items-center px-4 pt-10 pb-16 text-center md:pt-16 md:pb-24">
+          <h1 className="max-w-4xl text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-tight sm:leading-none">
             Kelola Hidupmu Sebagai{" "}
             <span className="text-primary">
               Mahasiswa
@@ -87,17 +87,17 @@ export default async function LandingPage() {
             dalam Satu Platform
           </h1>
 
-          <p className="mt-6 max-w-2xl text-lg text-muted-foreground md:text-xl">
+          <p className="mt-4 sm:mt-6 max-w-2xl text-sm sm:text-lg md:text-xl text-muted-foreground">
             Tugas, jadwal, catatan, belajar, keuangan, dan IPK — semua terintegrasi 
             dengan bantuan AI yang memahami kebutuhan akademikmu.
           </p>
 
-          <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+          <div className="mt-6 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto px-4 sm:px-0 justify-center">
             {userId ? (
-              <Link href="/dashboard">
+              <Link href="/dashboard" className="w-full sm:w-auto">
                 <Button
                   size="lg"
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm text-base px-8 h-12"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm text-sm sm:text-base px-8 h-10 sm:h-12 w-full"
                 >
                   Masuk ke Dashboard
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -105,20 +105,20 @@ export default async function LandingPage() {
               </Link>
             ) : (
               <>
-                <Link href="/sign-up">
+                <Link href="/sign-up" className="w-full sm:w-auto">
                   <Button
                     size="lg"
-                    className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm text-base px-8 h-12"
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm text-sm sm:text-base px-8 h-10 sm:h-12 w-full"
                   >
                     Mulai Sekarang — Gratis
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
-                <Link href="/sign-in">
+                <Link href="/sign-in" className="w-full sm:w-auto">
                   <Button
                     size="lg"
                     variant="outline"
-                    className="text-base px-8 h-12 border-border/50"
+                    className="text-sm sm:text-base px-8 h-10 sm:h-12 border-border/50 w-full"
                   >
                     Sudah Punya Akun? Masuk
                   </Button>
