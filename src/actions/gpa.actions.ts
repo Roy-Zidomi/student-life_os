@@ -130,6 +130,19 @@ export async function parseTranscriptAction(base64Image: string, mimeType: strin
     const { google } = await import("@ai-sdk/google");
     const { z } = await import("zod");
 
+    const isPdf = mimeType === "application/pdf";
+    const filePart = isPdf
+      ? {
+          type: "file" as const,
+          data: base64Image,
+          mediaType: "application/pdf",
+        }
+      : {
+          type: "image" as const,
+          image: base64Image,
+          mediaType: mimeType,
+        };
+
     const { object } = await generateObject({
       model: google("gemini-2.0-flash"),
       schema: z.object({
@@ -148,13 +161,9 @@ export async function parseTranscriptAction(base64Image: string, mimeType: strin
           content: [
             {
               type: "text",
-              text: "Extract all courses from this academic transcript or KHS image. Capture the Semester, Course Name (Mata Kuliah), Credits (SKS), and Grade (Nilai). Ensure that grade letters like A, AB, B, BC, C, D, E are captured exactly as shown. For SKS and Semester, convert them to numbers.",
+              text: "Extract all courses from this academic transcript or KHS document. Capture the Semester, Course Name (Mata Kuliah), Credits (SKS), and Grade (Nilai). Ensure that grade letters like A, AB, B, BC, C, D, E are captured exactly as shown. For SKS and Semester, convert them to numbers.",
             },
-            {
-              type: "image",
-              image: base64Image,
-              mediaType: mimeType,
-            },
+            filePart,
           ],
         },
       ],

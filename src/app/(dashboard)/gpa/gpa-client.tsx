@@ -221,18 +221,26 @@ export default function GPAPageClient({
                   {!scanPreview ? (
                     <label className="flex flex-col items-center justify-center border-2 border-dashed border-border rounded-xl p-8 hover:bg-accent/30 cursor-pointer transition">
                       <Upload className="h-10 w-10 text-muted-foreground mb-3" />
-                      <span className="text-sm font-medium">Klik untuk pilih gambar transkrip</span>
-                      <span className="text-xs text-muted-foreground mt-1">PNG, JPG, WEBP</span>
-                      <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+                      <span className="text-sm font-medium">Klik untuk pilih berkas</span>
+                      <span className="text-xs text-muted-foreground mt-1">PDF, PNG, JPG, WEBP</span>
+                      <input type="file" accept="image/*,application/pdf" className="hidden" onChange={handleFileChange} />
                     </label>
                   ) : (
                     <div className="space-y-3">
-                      <div className="relative rounded-xl overflow-hidden border max-h-[250px] flex items-center justify-center bg-black/10">
-                        <img src={scanPreview} alt="Preview" className="max-h-[250px] object-contain" />
+                      <div className="relative rounded-xl overflow-hidden border p-6 min-h-[150px] flex flex-col items-center justify-center bg-black/10">
+                        {scanFile?.type === "application/pdf" ? (
+                          <div className="flex flex-col items-center text-center gap-2">
+                            <FileText className="h-14 w-14 text-indigo-500 animate-pulse" />
+                            <span className="text-sm font-medium max-w-[250px] truncate">{scanFile.name}</span>
+                            <span className="text-xs text-muted-foreground">Dokumen PDF</span>
+                          </div>
+                        ) : (
+                          <img src={scanPreview} alt="Preview" className="max-h-[250px] object-contain" />
+                        )}
                       </div>
                       <div className="flex gap-2">
                         <Button variant="outline" onClick={() => { setScanFile(null); setScanPreview(null); }} className="flex-1 text-xs">
-                          Ganti Gambar
+                          Ganti Berkas
                         </Button>
                         <Button onClick={handleStartScan} disabled={isScanning} className="flex-1 bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xs">
                           {isScanning ? (
