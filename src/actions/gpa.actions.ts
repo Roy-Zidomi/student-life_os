@@ -121,3 +121,77 @@ export async function getGPAStats() {
     totalCourses: courses.length,
   };
 }
+
+export async function parseTranscriptAction(base64Image: string, mimeType: string) {
+  try {
+    const user = await ensureUser();
+    
+    const { generateObject } = await import("ai");
+    const { google } = await import("@ai-sdk/google");
+    const { z } = await import("zod");
+
+    const { object } = await generateObject({
+      model: google("gemini-2.0-flash"),
+      schema: z.object({
+        courses: z.array(
+          z.object({
+            semester: z.number().describe("Semester number, e.g. 1, 2, 3..."),
+            name: z.string().describe("Official course name, e.g. KALKULUS 1"),
+            credits: z.number().describe("SKS/Credits, e.g. 3, 2, 1..."),
+            grade: z.string().nullable().describe("Grade letter, e.g. A, AB, B, BC, C, D, E. If no grade, null."),
+          })
+        ),
+      }),
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: "Extract all courses from this academic transcript or KHS image. Capture the Semester, Course Name (Mata Kuliah), Credits (SKS), and Grade (Nilai). Ensure that grade letters like A, AB, B, BC, C, D, E are captured exactly as shown. For SKS and Semester, convert them to numbers.",
+            },
+            {
+              type: "image",
+              image: base64Image,
+              mediaType: mimeType,
+            },
+          ],
+        },
+      ],
+    });
+
+    return { success: true, courses: object.courses };
+  } catch (error: any) {
+    console.error("Error parsing transcript:", error);
+    return { success: false, error: error.message || "Gagal memproses dokumen" };
+  }
+}
+
+export async function importCoursesAction(courses: { semester: number; name: string; credits: number; grade: string | null }[]) {
+  try {
+    const user = await ensureUser();
+    
+    const createdCourses = await prisma.$transaction(
+      courses.map((course) => {
+        const gradePoint = course.grade ? GRADE_MAP[course.grade] ?? null : null;
+        return prisma.course.create({
+          data: {
+            name: course.name,
+            credits: course.credits,
+            grade: course.grade,
+            gradePoint,
+            semester: course.semester,
+            userId: user.id,
+          },
+        });
+      })
+    );
+
+    revalidatePath("/gpa");
+    revalidatePath("/dashboard");
+    return { success: true, count: createdCourses.length };
+  } catch (error: any) {
+    console.error("Error importing courses:", error);
+    return { success: false, error: error.message || "Gagal menyimpan mata kuliah" };
+  }
+}

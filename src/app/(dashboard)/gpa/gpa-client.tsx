@@ -11,8 +11,8 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, GraduationCap, TrendingUp, Pencil } from "lucide-react";
-import { createCourse, deleteCourse, updateCourse } from "@/actions/gpa.actions";
+import { Plus, Trash2, GraduationCap, TrendingUp, Pencil, Upload, Loader2, Sparkles, FileText, Check, RotateCcw } from "lucide-react";
+import { createCourse, deleteCourse, updateCourse, parseTranscriptAction, importCoursesAction } from "@/actions/gpa.actions";
 import { toast } from "sonner";
 import { GRADE_OPTIONS, GRADE_MAP } from "@/lib/constants";
 
@@ -45,6 +45,14 @@ export default function GPAPageClient({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedSemester, setSelectedSemester] = useState<string>("all");
 
+  // AI Transcript Scanning States
+  const [scanDialogOpen, setScanDialogOpen] = useState(false);
+  const [scanFile, setScanFile] = useState<File | null>(null);
+  const [scanPreview, setScanPreview] = useState<string | null>(null);
+  const [isScanning, setIsScanning] = useState(false);
+  const [parsedCourses, setParsedCourses] = useState<{ semester: number; name: string; credits: number; grade: string | null }[]>([]);
+  const [selectedParsedIndices, setSelectedParsedIndices] = useState<number[]>([]);
+
   const [name, setName] = useState("");
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<CourseItem | null>(null);
@@ -52,6 +60,64 @@ export default function GPAPageClient({
   const [editCredits, setEditCredits] = useState("3");
   const [editGrade, setEditGrade] = useState("");
   const [editSemester, setEditSemester] = useState("1");
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setScanFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setScanPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleStartScan = async () => {
+    if (!scanPreview || !scanFile) return;
+    setIsScanning(true);
+    try {
+      const base64Data = scanPreview.split(",")[1];
+      const mimeType = scanFile.type;
+      
+      const result = await parseTranscriptAction(base64Data, mimeType);
+      if (result.success && result.courses) {
+        setParsedCourses(result.courses);
+        setSelectedParsedIndices(result.courses.map((_, i) => i)); // select all by default
+        toast.success(`Berhasil mendeteksi ${result.courses.length} mata kuliah!`);
+      } else {
+        toast.error(result.error || "Gagal memproses gambar transkrip");
+      }
+    } catch (err: any) {
+      toast.error("Gagal mendeteksi gambar transkrip");
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  const handleSaveImport = async () => {
+    const coursesToImport = parsedCourses.filter((_, idx) => selectedParsedIndices.includes(idx));
+    if (coursesToImport.length === 0) {
+      toast.error("Pilih minimal satu mata kuliah untuk diimpor");
+      return;
+    }
+    startTransition(async () => {
+      try {
+        const result = await importCoursesAction(coursesToImport);
+        if (result.success) {
+          toast.success(`Berhasil mengimpor ${result.count} mata kuliah!`);
+          setScanDialogOpen(false);
+          setScanFile(null);
+          setScanPreview(null);
+          setParsedCourses([]);
+          window.location.reload();
+        } else {
+          toast.error(result.error || "Gagal mengimpor mata kuliah");
+        }
+      } catch (err) {
+        toast.error("Gagal mengimpor mata kuliah");
+      }
+    });
+  };
 
   const handleEditSubmit = () => {
     if (!selectedCourse) return;
@@ -124,11 +190,166 @@ export default function GPAPageClient({
           <h1 className="text-3xl font-bold tracking-tight">IPK Predictor</h1>
           <p className="text-muted-foreground mt-1">Hitung IPS dan IPK berdasarkan nilai.</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
-          <DialogTrigger render={<Button className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 shadow-lg shadow-indigo-500/25" />}>
-            <Plus className="mr-2 h-4 w-4" />
-            Tambah Mata Kuliah
-          </DialogTrigger>
+        <div className="flex items-center gap-3">
+          {/* Scan Transcript AI Dialog */}
+          <Dialog open={scanDialogOpen} onOpenChange={(open) => {
+            setScanDialogOpen(open);
+            if (!open) {
+              setScanFile(null);
+              setScanPreview(null);
+              setParsedCourses([]);
+            }
+          }}>
+            <DialogTrigger render={<Button variant="outline" className="border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/10 hover:text-indigo-300" />}>
+              <Sparkles className="mr-2 h-4 w-4 text-indigo-400" />
+              Scan Transkrip (AI)
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-xl max-h-[85vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-indigo-400 animate-pulse" />
+                  Scan Transkrip dengan AI
+                </DialogTitle>
+              </DialogHeader>
+
+              {parsedCourses.length === 0 ? (
+                <div className="space-y-4 pt-4">
+                  <p className="text-xs text-muted-foreground">
+                    Unggah foto/screenshot Transkrip Nilai atau Kartu Hasil Studi (KHS) Anda. AI akan mendeteksi mata kuliah, SKS, dan nilai secara otomatis.
+                  </p>
+
+                  {!scanPreview ? (
+                    <label className="flex flex-col items-center justify-center border-2 border-dashed border-border rounded-xl p-8 hover:bg-accent/30 cursor-pointer transition">
+                      <Upload className="h-10 w-10 text-muted-foreground mb-3" />
+                      <span className="text-sm font-medium">Klik untuk pilih gambar transkrip</span>
+                      <span className="text-xs text-muted-foreground mt-1">PNG, JPG, WEBP</span>
+                      <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+                    </label>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="relative rounded-xl overflow-hidden border max-h-[250px] flex items-center justify-center bg-black/10">
+                        <img src={scanPreview} alt="Preview" className="max-h-[250px] object-contain" />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button variant="outline" onClick={() => { setScanFile(null); setScanPreview(null); }} className="flex-1 text-xs">
+                          Ganti Gambar
+                        </Button>
+                        <Button onClick={handleStartScan} disabled={isScanning} className="flex-1 bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xs">
+                          {isScanning ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Membaca Transkrip...
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="mr-2 h-4 w-4" />
+                              Mulai Scan AI
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-4 pt-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground">
+                      Pilih dan verifikasi mata kuliah hasil scan AI sebelum disimpan ke database.
+                    </p>
+                    <Button variant="outline" size="sm" onClick={() => setParsedCourses([])} className="h-8 text-xs">
+                      <RotateCcw className="mr-1 h-3.5 w-3.5" />
+                      Scan Ulang
+                    </Button>
+                  </div>
+
+                  <div className="border rounded-lg overflow-hidden max-h-[300px] overflow-y-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-muted text-xs font-semibold text-muted-foreground uppercase sticky top-0">
+                        <tr>
+                          <th className="p-2.5 text-left w-12">
+                            <input
+                              type="checkbox"
+                              checked={selectedParsedIndices.length === parsedCourses.length}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedParsedIndices(parsedCourses.map((_, i) => i));
+                                } else {
+                                  setSelectedParsedIndices([]);
+                                }
+                              }}
+                              className="rounded border-gray-300 bg-background"
+                            />
+                          </th>
+                          <th className="p-2.5 text-center w-16">Sem</th>
+                          <th className="p-2.5 text-left">Mata Kuliah</th>
+                          <th className="p-2.5 text-center w-16">SKS</th>
+                          <th className="p-2.5 text-center w-16">Nilai</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {parsedCourses.map((course, idx) => {
+                          const isSelected = selectedParsedIndices.includes(idx);
+                          return (
+                            <tr key={idx} className={`hover:bg-accent/10 ${isSelected ? "" : "opacity-50"}`}>
+                              <td className="p-2.5 text-left">
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setSelectedParsedIndices((prev) => [...prev, idx]);
+                                    } else {
+                                      setSelectedParsedIndices((prev) => prev.filter((i) => i !== idx));
+                                    }
+                                  }}
+                                  className="rounded border-gray-300 bg-background"
+                                />
+                              </td>
+                              <td className="p-2.5 text-center font-semibold">{course.semester}</td>
+                              <td className="p-2.5 text-left font-medium max-w-[200px] truncate">{course.name}</td>
+                              <td className="p-2.5 text-center font-mono">{course.credits}</td>
+                              <td className="p-2.5 text-center">
+                                <span className="inline-block px-2 py-0.5 rounded text-xs font-bold bg-indigo-500/10 text-indigo-400">
+                                  {course.grade || "-"}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <Button variant="outline" onClick={() => setScanDialogOpen(false)} className="flex-1 text-xs">
+                      Batal
+                    </Button>
+                    <Button onClick={handleSaveImport} disabled={isPending} className="flex-1 bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xs">
+                      {isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Menyimpan...
+                        </>
+                      ) : (
+                        <>
+                          <Check className="mr-2 h-4 w-4" />
+                          Simpan {selectedParsedIndices.length} Mata Kuliah
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+
+          {/* Add Course Dialog */}
+          <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
+            <DialogTrigger render={<Button className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 shadow-lg shadow-indigo-500/25" />}>
+              <Plus className="mr-2 h-4 w-4" />
+              Tambah Mata Kuliah
+            </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Tambah Mata Kuliah</DialogTitle>
@@ -166,6 +387,7 @@ export default function GPAPageClient({
           </DialogContent>
         </Dialog>
       </div>
+    </div>
 
       {/* GPA Summary */}
       <div className="grid gap-4 sm:grid-cols-3">
