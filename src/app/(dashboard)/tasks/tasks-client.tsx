@@ -195,7 +195,7 @@ export default function TasksPageClient({ initialTasks }: { initialTasks: Task[]
           <p className="text-muted-foreground mt-1">Kelola dan pantau semua tugasmu.</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
-          <DialogTrigger render={<Button className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 shadow-lg shadow-indigo-500/25" />}>
+          <DialogTrigger render={<Button className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm" />}>
             <Plus className="mr-2 h-4 w-4" />
             Tugas Baru
           </DialogTrigger>
@@ -240,7 +240,7 @@ export default function TasksPageClient({ initialTasks }: { initialTasks: Task[]
                 <Label>Deadline</Label>
                 <Input type="datetime-local" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
               </div>
-              <Button onClick={handleSubmit} disabled={isPending} className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+              <Button onClick={handleSubmit} disabled={isPending} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
                 {isPending ? "Menyimpan..." : editingTask ? "Perbarui" : "Buat Tugas"}
               </Button>
             </div>
@@ -365,7 +365,7 @@ export default function TasksPageClient({ initialTasks }: { initialTasks: Task[]
                     <DeadlineText deadline={task.deadline} />
                   </div>
                 </div>
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-1 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity">
                   <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(task)}>
                     <Edit className="h-3.5 w-3.5" />
                   </Button>

@@ -50,7 +50,7 @@ export default function NoteEditorClient({ note }: { note: NoteData }) {
         <Button
           onClick={handleSave}
           disabled={isPending || saved}
-          className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white"
+          className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
           size="sm"
         >
           <Save className="mr-2 h-4 w-4" />

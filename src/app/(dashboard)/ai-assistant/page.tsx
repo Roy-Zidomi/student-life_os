@@ -151,7 +151,7 @@ export default function AIAssistantPage() {
               className="flex-1"
               disabled={isLoading}
             />
-            <Button type="submit" disabled={isLoading || !input.trim()} className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 shadow-md">
+            <Button type="submit" disabled={isLoading || !input.trim()} className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm">
               <Send className="h-4 w-4" />
             </Button>
           </form>

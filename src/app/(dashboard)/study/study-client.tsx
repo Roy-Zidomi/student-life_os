@@ -102,7 +102,7 @@ export default function StudyPageClient({
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               {pomodoro.mode === "focus" ? (
-                <><Brain className="h-5 w-5 text-indigo-500" /> Mode Fokus</>
+                <><Brain className="h-5 w-5 text-primary" /> Mode Fokus</>
               ) : (
                 <><Coffee className="h-5 w-5 text-emerald-500" /> Mode Istirahat</>
               )}
@@ -121,12 +121,12 @@ export default function StudyPageClient({
                 <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="2" className="text-accent" />
                 <circle
                   cx="50" cy="50" r="45" fill="none"
-                  stroke={pomodoro.mode === "focus" ? "#6366f1" : "#10b981"}
+                  stroke="currentColor"
                   strokeWidth="3"
                   strokeLinecap="round"
                   strokeDasharray={`${2 * Math.PI * 45}`}
                   strokeDashoffset={`${2 * Math.PI * 45 * (1 - pomodoro.progress / 100)}`}
-                  className="transition-all duration-1000"
+                  className={`transition-all duration-1000 ${pomodoro.mode === "focus" ? "text-primary" : "text-emerald-500"}`}
                 />
               </svg>
               <div className="text-center">
@@ -140,7 +140,7 @@ export default function StudyPageClient({
             {/* Controls */}
             <div className="flex items-center gap-3">
               {!pomodoro.isRunning ? (
-                <Button onClick={pomodoro.start} size="lg" className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+                <Button onClick={pomodoro.start} size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90">
                   <Play className="mr-2 h-4 w-4" /> Mulai
                 </Button>
               ) : (
@@ -201,7 +201,7 @@ export default function StudyPageClient({
             <Card className="border-border/50 bg-card/50">
               <CardHeader>
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <BookOpen className="h-4 w-4 text-indigo-500" />
+                  <BookOpen className="h-4 w-4 text-foreground/70" />
                   Breakdown per Mata Kuliah
                 </CardTitle>
               </CardHeader>
@@ -220,7 +220,7 @@ export default function StudyPageClient({
           <Card className="border-border/50 bg-card/50">
             <CardHeader>
               <CardTitle className="text-sm flex items-center gap-2">
-                <Clock className="h-4 w-4 text-indigo-500" />
+                <Clock className="h-4 w-4 text-foreground/70" />
                 Riwayat Sesi
               </CardTitle>
             </CardHeader>
@@ -233,7 +233,7 @@ export default function StudyPageClient({
                       {format(new Date(session.date), "dd MMM yyyy, HH:mm", { locale: localeId })} • {session.duration} menit
                     </p>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 text-destructive" onClick={() => handleDeleteSession(session.id)}>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 opacity-100 lg:opacity-0 group-hover:opacity-100 text-destructive" onClick={() => handleDeleteSession(session.id)}>
                     <Trash2 className="h-3 w-3" />
                   </Button>
                 </div>

@@ -230,7 +230,7 @@ export default function GPAPageClient({
                       <div className="relative rounded-xl overflow-hidden border p-6 min-h-[150px] flex flex-col items-center justify-center bg-black/10">
                         {scanFile?.type === "application/pdf" ? (
                           <div className="flex flex-col items-center text-center gap-2">
-                            <FileText className="h-14 w-14 text-indigo-500 animate-pulse" />
+                             <FileText className="h-14 w-14 text-primary animate-pulse" />
                             <span className="text-sm font-medium max-w-[250px] truncate">{scanFile.name}</span>
                             <span className="text-xs text-muted-foreground">Dokumen PDF</span>
                           </div>
@@ -242,7 +242,7 @@ export default function GPAPageClient({
                         <Button variant="outline" onClick={() => { setScanFile(null); setScanPreview(null); }} className="flex-1 text-xs">
                           Ganti Berkas
                         </Button>
-                        <Button onClick={handleStartScan} disabled={isScanning} className="flex-1 bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xs">
+                         <Button onClick={handleStartScan} disabled={isScanning} className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 text-xs">
                           {isScanning ? (
                             <>
                               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -318,7 +318,7 @@ export default function GPAPageClient({
                               <td className="p-2.5 text-left font-medium max-w-[200px] truncate">{course.name}</td>
                               <td className="p-2.5 text-center font-mono">{course.credits}</td>
                               <td className="p-2.5 text-center">
-                                <span className="inline-block px-2 py-0.5 rounded text-xs font-bold bg-indigo-500/10 text-indigo-400">
+                                <span className="inline-block px-2 py-0.5 rounded text-xs font-bold bg-secondary text-secondary-foreground">
                                   {course.grade || "-"}
                                 </span>
                               </td>
@@ -333,7 +333,7 @@ export default function GPAPageClient({
                     <Button variant="outline" onClick={() => setScanDialogOpen(false)} className="flex-1 text-xs">
                       Batal
                     </Button>
-                    <Button onClick={handleSaveImport} disabled={isPending} className="flex-1 bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xs">
+                     <Button onClick={handleSaveImport} disabled={isPending} className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 text-xs">
                       {isPending ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -353,8 +353,8 @@ export default function GPAPageClient({
           </Dialog>
 
           {/* Add Course Dialog */}
-          <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
-            <DialogTrigger render={<Button className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 shadow-lg shadow-indigo-500/25" />}>
+           <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
+             <DialogTrigger render={<Button className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm" />}>
               <Plus className="mr-2 h-4 w-4" />
               Tambah Mata Kuliah
             </DialogTrigger>
@@ -388,7 +388,7 @@ export default function GPAPageClient({
                   <Input type="number" value={semester} onChange={(e) => setSemester(e.target.value)} min="1" max="14" />
                 </div>
               </div>
-              <Button onClick={handleSubmit} disabled={isPending} className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+               <Button onClick={handleSubmit} disabled={isPending} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
                 {isPending ? "Menyimpan..." : "Tambah"}
               </Button>
             </div>
@@ -401,9 +401,9 @@ export default function GPAPageClient({
       <div className="grid gap-4 sm:grid-cols-3">
         <Card className="border-border/50 bg-card/50">
           <CardContent className="p-5 text-center">
-            <GraduationCap className="mx-auto h-6 w-6 text-indigo-500 mb-2" />
-            <p className="text-xs text-muted-foreground">IPK (Kumulatif)</p>
-            <p className="text-3xl font-bold mt-1 bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">
+             <GraduationCap className="mx-auto h-6 w-6 text-primary mb-2" />
+             <p className="text-xs text-muted-foreground">IPK (Kumulatif)</p>
+             <p className="text-3xl font-bold mt-1 text-foreground">
               {stats.cumulativeGPA.toFixed(2)}
             </p>
           </CardContent>
@@ -435,7 +435,7 @@ export default function GPAPageClient({
                 <div key={s.semester} className="flex flex-col items-center w-12">
                   <span className="text-xs font-bold mb-1">{s.gpa.toFixed(2)}</span>
                   <div
-                    className="w-full rounded-t-md bg-gradient-to-t from-indigo-500 to-purple-600 transition-all shadow-md shadow-indigo-500/10"
+                    className="w-full rounded-t-md bg-primary transition-all shadow-md"
                     style={{ height: `${(s.gpa / 4) * 100}%` }}
                   />
                   <span className="text-xs text-muted-foreground mt-2 font-medium">Sem {s.semester}</span>
@@ -495,10 +495,10 @@ export default function GPAPageClient({
                   ) : (
                     <span className="text-xs text-muted-foreground">Belum ada nilai</span>
                   )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground"
+                   <Button
+                     variant="ghost"
+                     size="icon"
+                     className="h-7 w-7 opacity-100 lg:opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground"
                     onClick={() => {
                       setSelectedCourse(course);
                       setEditName(course.name);
@@ -510,7 +510,7 @@ export default function GPAPageClient({
                   >
                     <Pencil className="h-3 w-3" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 text-destructive" onClick={() => handleDelete(course.id)}>
+                   <Button variant="ghost" size="icon" className="h-7 w-7 opacity-100 lg:opacity-0 group-hover:opacity-100 text-destructive" onClick={() => handleDelete(course.id)}>
                     <Trash2 className="h-3 w-3" />
                   </Button>
                 </div>
@@ -561,7 +561,7 @@ export default function GPAPageClient({
                 <Input type="number" value={editSemester} onChange={(e) => setEditSemester(e.target.value)} min="1" max="14" />
               </div>
             </div>
-            <Button onClick={handleEditSubmit} disabled={isPending} className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+             <Button onClick={handleEditSubmit} disabled={isPending} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
               {isPending ? "Menyimpan..." : "Simpan Perubahan"}
             </Button>
           </div>

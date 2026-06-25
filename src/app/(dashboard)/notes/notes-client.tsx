@@ -131,16 +131,16 @@ export default function NotesPageClient({ initialNotes }: { initialNotes: NoteIt
   };
 
   const NoteCard = ({ note }: { note: NoteItem }) => (
-    <Card className="border-border/50 bg-card/50 hover:bg-card/80 transition-all group hover:-translate-y-0.5 hover:shadow-lg hover:shadow-indigo-500/5">
+    <Card className="border-border/50 bg-card/50 hover:bg-card/80 transition-all group hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/5">
       <CardContent className="p-4">
         <div className="flex items-start justify-between">
           <Link href={`/notes/${note.id}`} className="flex-1 min-w-0">
-            <h3 className="font-medium truncate hover:text-indigo-500 transition-colors">{note.title}</h3>
+            <h3 className="font-medium truncate hover:text-primary transition-colors">{note.title}</h3>
             <p className="text-sm text-muted-foreground mt-1 line-clamp-3">
               {note.content || "Catatan kosong..."}
             </p>
           </Link>
-          <div className="flex items-center gap-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="flex items-center gap-1 ml-2 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity">
             <Button
               variant="ghost"
               size="icon"
@@ -181,7 +181,7 @@ export default function NotesPageClient({ initialNotes }: { initialNotes: NoteIt
           <p className="text-muted-foreground mt-1">Buat dan kelola catatan dengan Markdown.</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger render={<Button className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 shadow-lg shadow-indigo-500/25" />}>
+          <DialogTrigger render={<Button className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm" />}>
             <Plus className="mr-2 h-4 w-4" />
             Catatan Baru
           </DialogTrigger>
@@ -198,7 +198,7 @@ export default function NotesPageClient({ initialNotes }: { initialNotes: NoteIt
                 <Label>Isi Catatan</Label>
                 <Textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Tulis isi catatan Anda di sini..." className="min-h-[150px]" />
               </div>
-              <Button onClick={handleCreate} disabled={isPending} className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+              <Button onClick={handleCreate} disabled={isPending} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
                 {isPending ? "Membuat..." : "Buat Catatan"}
               </Button>
             </div>
@@ -263,7 +263,7 @@ export default function NotesPageClient({ initialNotes }: { initialNotes: NoteIt
               <Label>Isi Catatan</Label>
               <Textarea value={editContent} onChange={(e) => setEditContent(e.target.value)} placeholder="Tulis isi catatan Anda di sini..." className="min-h-[150px]" />
             </div>
-            <Button onClick={handleEditSubmit} disabled={isPending} className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+            <Button onClick={handleEditSubmit} disabled={isPending} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
               {isPending ? "Menyimpan..." : "Simpan Perubahan"}
             </Button>
           </div>

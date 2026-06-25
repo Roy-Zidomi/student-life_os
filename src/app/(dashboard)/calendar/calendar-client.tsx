@@ -165,7 +165,7 @@ export default function CalendarPageClient({ initialEvents }: { initialEvents: C
           <p className="text-muted-foreground mt-1">Atur jadwal kuliah, ujian, dan kegiatan.</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
-          <DialogTrigger render={<Button className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 shadow-lg shadow-indigo-500/25" />}>
+          <DialogTrigger render={<Button className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm" />}>
             <Plus className="mr-2 h-4 w-4" />
             Event Baru
           </DialogTrigger>
@@ -211,7 +211,7 @@ export default function CalendarPageClient({ initialEvents }: { initialEvents: C
                   <Input type="datetime-local" value={endDateStr} onChange={(e) => setEndDateStr(e.target.value)} />
                 </div>
               </div>
-              <Button onClick={handleSubmit} disabled={isPending} className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+              <Button onClick={handleSubmit} disabled={isPending} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
                 {isPending ? "Menyimpan..." : "Buat Event"}
               </Button>
             </div>
@@ -256,11 +256,11 @@ export default function CalendarPageClient({ initialEvents }: { initialEvents: C
                     !isSameMonth(date, currentDate)
                       ? "border-transparent text-muted-foreground/30"
                       : isToday(date)
-                      ? "border-indigo-500 bg-indigo-500/5"
+                      ? "border-primary bg-primary/5"
                       : "border-border/30"
                   }`}
                 >
-                  <span className={`text-xs font-medium ${isToday(date) ? "text-indigo-500" : ""}`}>
+                  <span className={`text-xs font-medium ${isToday(date) ? "text-primary" : ""}`}>
                     {format(date, "d")}
                   </span>
                   <div className="mt-1 space-y-0.5">
@@ -268,7 +268,7 @@ export default function CalendarPageClient({ initialEvents }: { initialEvents: C
                       <div
                         key={event.id}
                         className="truncate rounded px-1 py-0.5 text-[10px] font-medium text-white"
-                        style={{ backgroundColor: event.color || "#6366f1" }}
+                        style={{ backgroundColor: event.color || "#818cf8" }}
                       >
                         {event.title}
                       </div>
@@ -300,7 +300,7 @@ export default function CalendarPageClient({ initialEvents }: { initialEvents: C
               .map((event) => (
                 <div key={event.id} className="flex items-center justify-between rounded-lg bg-accent/30 p-3 group hover:bg-accent/50 transition-colors">
                   <div className="flex items-center gap-3">
-                    <div className="h-2 w-2 rounded-full" style={{ backgroundColor: event.color || "#6366f1" }} />
+                    <div className="h-2 w-2 rounded-full" style={{ backgroundColor: event.color || "#818cf8" }} />
                     <div>
                       <p className="text-sm font-medium">{event.title}</p>
                       <p className="text-xs text-muted-foreground">
@@ -311,7 +311,7 @@ export default function CalendarPageClient({ initialEvents }: { initialEvents: C
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-[10px]">{EVENT_TYPE_LABELS[event.type]}</Badge>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 text-destructive" onClick={() => handleDelete(event.id)}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 opacity-100 lg:opacity-0 group-hover:opacity-100 text-destructive" onClick={() => handleDelete(event.id)}>
                       <Trash2 className="h-3 w-3" />
                     </Button>
                   </div>

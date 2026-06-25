@@ -48,14 +48,14 @@ export default async function LandingPage() {
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/25">
               <Sparkles className="h-4.5 w-4.5 text-white" />
             </div>
-            <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+            <span className="text-xl font-bold tracking-tight text-foreground">
               StudentOS
             </span>
           </div>
           <div className="flex items-center gap-3">
             {userId ? (
               <Link href="/dashboard">
-                <Button className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 shadow-lg shadow-indigo-500/25 text-sm">
+                <Button className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm text-sm">
                   Dashboard
                   <ArrowRight className="ml-1 h-4 w-4" />
                 </Button>
@@ -68,10 +68,10 @@ export default async function LandingPage() {
                   </Button>
                 </Link>
                 <Link href="/sign-up">
-                  <Button className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 shadow-lg shadow-indigo-500/25 text-sm">
-                    Daftar Gratis
-                    <ArrowRight className="ml-1 h-4 w-4" />
-                  </Button>
+                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm text-sm">
+                  Daftar Gratis
+                  <ArrowRight className="ml-1 h-4 w-4" />
+                </Button>
                 </Link>
               </>
             )}
@@ -80,16 +80,16 @@ export default async function LandingPage() {
 
         {/* Hero */}
         <section className="flex flex-col items-center px-6 pt-20 pb-16 text-center md:pt-32 md:pb-24">
-          <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-4 py-1.5 mb-8">
-            <Zap className="h-3.5 w-3.5 text-indigo-400" />
-            <span className="text-xs font-medium text-indigo-400">
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 mb-8">
+            <Zap className="h-3.5 w-3.5 text-primary" />
+            <span className="text-xs font-medium text-primary">
               Platform Produktivitas All-in-One untuk Mahasiswa
             </span>
           </div>
 
           <h1 className="max-w-4xl text-4xl font-bold tracking-tight md:text-6xl lg:text-7xl">
             Kelola Hidupmu Sebagai{" "}
-            <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+            <span className="text-primary">
               Mahasiswa
             </span>{" "}
             dalam Satu Platform
@@ -105,7 +105,7 @@ export default async function LandingPage() {
               <Link href="/dashboard">
                 <Button
                   size="lg"
-                  className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 shadow-xl shadow-indigo-500/25 text-base px-8 h-12"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm text-base px-8 h-12"
                 >
                   Masuk ke Dashboard
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -116,7 +116,7 @@ export default async function LandingPage() {
                 <Link href="/sign-up">
                   <Button
                     size="lg"
-                    className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 shadow-xl shadow-indigo-500/25 text-base px-8 h-12"
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm text-base px-8 h-12"
                   >
                     Mulai Sekarang — Gratis
                     <ArrowRight className="ml-2 h-4 w-4" />
@@ -152,7 +152,7 @@ export default async function LandingPage() {
               {features.map((feature) => (
                 <div
                   key={feature.title}
-                  className="group relative overflow-hidden rounded-xl border border-border/50 bg-card/30 p-6 backdrop-blur-sm transition-all duration-300 hover:bg-card/60 hover:shadow-lg hover:shadow-indigo-500/5 hover:-translate-y-1"
+                  className="group relative overflow-hidden rounded-xl border border-border/50 bg-card/30 p-6 backdrop-blur-sm transition-all duration-300 hover:bg-card/60 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1"
                 >
                   <div
                     className={`mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br ${feature.color} shadow-md`}
@@ -174,7 +174,7 @@ export default async function LandingPage() {
 
         {/* CTA */}
         <section className="px-6 pb-24 md:px-12">
-          <div className="mx-auto max-w-4xl rounded-2xl border border-indigo-500/20 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-pink-500/10 p-12 text-center backdrop-blur-sm">
+          <div className="mx-auto max-w-4xl rounded-2xl border border-primary/20 bg-primary/5 p-12 text-center backdrop-blur-sm">
             <h2 className="text-3xl font-bold tracking-tight">
               Siap Meningkatkan Produktivitasmu?
             </h2>
@@ -184,7 +184,7 @@ export default async function LandingPage() {
             <Link href={userId ? "/dashboard" : "/sign-up"}>
               <Button
                 size="lg"
-                className="mt-8 bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 shadow-xl shadow-indigo-500/25 text-base px-8 h-12"
+                className="mt-8 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm text-base px-8 h-12"
               >
                 {userId ? "Pergi ke Dashboard" : "Daftar Gratis Sekarang"}
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -197,7 +197,7 @@ export default async function LandingPage() {
         <footer className="border-t border-border/50 px-6 py-8 md:px-12">
           <div className="mx-auto flex max-w-6xl items-center justify-between">
             <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-indigo-500" />
+              <Sparkles className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium text-muted-foreground">
                 Student Life OS
               </span>

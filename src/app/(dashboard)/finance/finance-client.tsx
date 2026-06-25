@@ -59,9 +59,24 @@ const CATEGORY_ICONS: Record<string, string> = {
   FREELANCE: "💻", OTHER: "📦",
 };
 
+const MONTHS = [
+  { value: "ALL", label: "Semua Bulan" },
+  { value: "1", label: "Januari" },
+  { value: "2", label: "Februari" },
+  { value: "3", label: "Maret" },
+  { value: "4", label: "April" },
+  { value: "5", label: "Mei" },
+  { value: "6", label: "Juni" },
+  { value: "7", label: "Juli" },
+  { value: "8", label: "Agustus" },
+  { value: "9", label: "September" },
+  { value: "10", label: "Oktober" },
+  { value: "11", label: "November" },
+  { value: "12", label: "Desember" },
+];
+
 export default function FinancePageClient({
   initialTransactions,
-  initialStats,
   initialBalance,
   initialDebts,
 }: {
@@ -71,10 +86,62 @@ export default function FinancePageClient({
   initialDebts: DebtItem[];
 }) {
   const [transactions, setTransactions] = useState<TransactionItem[]>(initialTransactions);
-  const [stats, setStats] = useState<FinanceStatsData>(initialStats);
   const [balance, setBalance] = useState<number>(initialBalance);
   const [debts, setDebts] = useState<DebtItem[]>(initialDebts);
   const [isPending, startTransition] = useTransition();
+
+  const [selectedMonth, setSelectedMonth] = useState<string>(
+    (new Date().getMonth() + 1).toString()
+  );
+  const [selectedYear, setSelectedYear] = useState<string>(
+    new Date().getFullYear().toString()
+  );
+
+  // Derived state calculations
+  const availableYears = Array.from(
+    new Set([
+      new Date().getFullYear().toString(),
+      ...transactions.map((tx) => new Date(tx.date).getFullYear().toString()),
+    ])
+  ).sort((a, b) => Number(b) - Number(a));
+
+  const filteredTransactions = transactions.filter((tx) => {
+    const txDate = new Date(tx.date);
+    const txMonth = (txDate.getMonth() + 1).toString();
+    const txYear = txDate.getFullYear().toString();
+
+    const matchesMonth = selectedMonth === "ALL" || txMonth === selectedMonth;
+    const matchesYear = selectedYear === "ALL" || txYear === selectedYear;
+
+    return matchesMonth && matchesYear;
+  });
+
+  const periodIncome = filteredTransactions
+    .filter((t) => t.type === "INCOME")
+    .reduce((acc, t) => acc + t.amount, 0);
+
+  const periodExpense = filteredTransactions
+    .filter((t) => t.type === "EXPENSE")
+    .reduce((acc, t) => acc + t.amount, 0);
+
+  const categoryMap: Record<string, number> = {};
+  filteredTransactions
+    .filter((t) => t.type === "EXPENSE")
+    .forEach((t) => {
+      categoryMap[t.category] = (categoryMap[t.category] || 0) + t.amount;
+    });
+
+  const periodCategoryBreakdown = Object.entries(categoryMap)
+    .map(([category, amount]) => ({ category, amount }))
+    .sort((a, b) => b.amount - a.amount);
+
+  const totalAllTimeIncome = transactions
+    .filter((t) => t.type === "INCOME")
+    .reduce((acc, t) => acc + t.amount, 0);
+
+  const totalAllTimeExpense = transactions
+    .filter((t) => t.type === "EXPENSE")
+    .reduce((acc, t) => acc + t.amount, 0);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [balanceDialogOpen, setBalanceDialogOpen] = useState(false);
@@ -139,13 +206,6 @@ export default function FinancePageClient({
         });
         if (result.success && result.data) {
           setTransactions((prev) => [result.data as TransactionItem, ...prev]);
-          const amt = Number(amount);
-          setStats((prev) => ({
-            ...prev,
-            totalIncome: type === "INCOME" ? prev.totalIncome + amt : prev.totalIncome,
-            totalExpense: type === "EXPENSE" ? prev.totalExpense + amt : prev.totalExpense,
-            balance: type === "INCOME" ? prev.balance + amt : prev.balance - amt,
-          }));
           toast.success("Transaksi berhasil ditambahkan");
           setDialogOpen(false);
           resetForm();
@@ -161,16 +221,7 @@ export default function FinancePageClient({
       try {
         const result = await deleteTransaction(id);
         if (result.success) {
-          const deleted = transactions.find((t) => t.id === id);
           setTransactions((prev) => prev.filter((t) => t.id !== id));
-          if (deleted) {
-            setStats((prev) => ({
-              ...prev,
-              totalIncome: deleted.type === "INCOME" ? prev.totalIncome - deleted.amount : prev.totalIncome,
-              totalExpense: deleted.type === "EXPENSE" ? prev.totalExpense - deleted.amount : prev.totalExpense,
-              balance: deleted.type === "INCOME" ? prev.balance - deleted.amount : prev.balance + deleted.amount,
-            }));
-          }
           toast.success("Transaksi berhasil dihapus");
         }
       } catch {
@@ -212,11 +263,6 @@ export default function FinancePageClient({
               date: new Date(),
             };
             setTransactions((prev) => [mockTx, ...prev]);
-            setStats((prev) => ({
-              ...prev,
-              totalExpense: prev.totalExpense + amt,
-              balance: prev.balance - amt,
-            }));
           }
         }
       } catch {
@@ -252,11 +298,6 @@ export default function FinancePageClient({
               date: new Date(),
             };
             setTransactions((prev) => [mockTx, ...prev]);
-            setStats((prev) => ({
-              ...prev,
-              totalIncome: prev.totalIncome + amt,
-              balance: prev.balance + amt,
-            }));
           }
         }
       } catch {
@@ -280,8 +321,8 @@ export default function FinancePageClient({
   };
 
   const categories = type === "INCOME" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
-  const totalExpense = stats.categoryBreakdown.reduce((acc, c) => acc + c.amount, 0);
-  const currentSavings = balance + stats.totalIncome - stats.totalExpense;
+  const totalExpense = periodCategoryBreakdown.reduce((acc, c) => acc + c.amount, 0);
+  const currentSavings = balance + totalAllTimeIncome - totalAllTimeExpense;
 
   return (
     <div className="space-y-6">
@@ -313,15 +354,15 @@ export default function FinancePageClient({
                     Saldo awal ini adalah dana/tabungan awal Anda sebelum ditambah pemasukan dan dikurangi pengeluaran dari transaksi.
                   </p>
                 </div>
-                <Button onClick={handleUpdateBalance} disabled={isPending} className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+                 <Button onClick={handleUpdateBalance} disabled={isPending} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
                   {isPending ? "Menyimpan..." : "Simpan Saldo Awal"}
                 </Button>
               </div>
             </DialogContent>
           </Dialog>
 
-          <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
-            <DialogTrigger render={<Button className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 shadow-lg shadow-indigo-500/25" />}>
+           <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
+             <DialogTrigger render={<Button className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm" />}>
               <Plus className="mr-2 h-4 w-4" />
               Transaksi Baru
             </DialogTrigger>
@@ -363,7 +404,7 @@ export default function FinancePageClient({
                   <Label>Tanggal</Label>
                   <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
                 </div>
-                <Button onClick={handleSubmit} disabled={isPending} className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+                 <Button onClick={handleSubmit} disabled={isPending} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
                   {isPending ? "Menyimpan..." : "Tambah Transaksi"}
                 </Button>
               </div>
@@ -372,14 +413,59 @@ export default function FinancePageClient({
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Filter Periode Bulan & Tahun */}
+      <div className="flex flex-wrap items-center gap-3 bg-card/30 p-3 rounded-xl border border-border/50">
+        <span className="text-sm font-medium text-muted-foreground mr-1">Filter Periode:</span>
+        <Select value={selectedMonth} onValueChange={(val) => setSelectedMonth(val || "ALL")}>
+          <SelectTrigger className="w-[140px] h-9">
+            <SelectValue placeholder="Pilih Bulan" />
+          </SelectTrigger>
+          <SelectContent>
+            {MONTHS.map((m) => (
+              <SelectItem key={m.value} value={m.value}>
+                {m.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={selectedYear} onValueChange={(val) => setSelectedYear(val || "ALL")}>
+          <SelectTrigger className="w-[120px] h-9">
+            <SelectValue placeholder="Pilih Tahun" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">Semua Tahun</SelectItem>
+            {availableYears.map((yr) => (
+              <SelectItem key={yr} value={yr}>
+                {yr}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Clear filter button if not current month/year */}
+        {(selectedMonth !== (new Date().getMonth() + 1).toString() || selectedYear !== new Date().getFullYear().toString()) && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setSelectedMonth((new Date().getMonth() + 1).toString());
+              setSelectedYear(new Date().getFullYear().toString());
+            }}
+            className="text-xs h-9 px-3 text-muted-foreground hover:text-foreground"
+          >
+            Reset Periode
+          </Button>
+        )}
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-3">
         <Card className="border-border/50 bg-card/50">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted-foreground">Total Pemasukan</p>
-                <p className="text-xl font-bold text-emerald-500 mt-1">{formatRupiah(stats.totalIncome)}</p>
+                <p className="text-xl font-bold text-emerald-500 mt-1">{formatRupiah(periodIncome)}</p>
               </div>
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10">
                 <ArrowUpRight className="h-5 w-5 text-emerald-500" />
@@ -392,7 +478,7 @@ export default function FinancePageClient({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted-foreground">Total Pengeluaran</p>
-                <p className="text-xl font-bold text-red-500 mt-1">{formatRupiah(stats.totalExpense)}</p>
+                <p className="text-xl font-bold text-red-500 mt-1">{formatRupiah(periodExpense)}</p>
               </div>
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-500/10">
                 <ArrowDownRight className="h-5 w-5 text-red-500" />
@@ -405,12 +491,12 @@ export default function FinancePageClient({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted-foreground">Tabungan Saat Ini</p>
-                <p className={`text-xl font-bold mt-1 ${currentSavings >= 0 ? "text-indigo-400" : "text-red-500"}`}>
+                <p className={`text-xl font-bold mt-1 ${currentSavings >= 0 ? "text-primary" : "text-red-500"}`}>
                   {formatRupiah(currentSavings)}
                 </p>
               </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500/10">
-                <Wallet className="h-5 w-5 text-indigo-500" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                <Wallet className="h-5 w-5 text-primary" />
               </div>
             </div>
           </CardContent>
@@ -426,10 +512,10 @@ export default function FinancePageClient({
               <CardTitle className="text-sm">Distribusi Pengeluaran</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {stats.categoryBreakdown.length === 0 ? (
+              {periodCategoryBreakdown.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">Belum ada data pengeluaran.</p>
               ) : (
-                stats.categoryBreakdown.map((item) => {
+                periodCategoryBreakdown.map((item) => {
                   const percentage = totalExpense > 0 ? (item.amount / totalExpense) * 100 : 0;
                   return (
                     <div key={item.category} className="space-y-1">
@@ -437,9 +523,9 @@ export default function FinancePageClient({
                         <span>{CATEGORY_ICONS[item.category]} {CATEGORY_LABELS[item.category] || item.category}</span>
                         <span className="font-medium">{formatRupiah(item.amount)}</span>
                       </div>
-                      <div className="h-1.5 rounded-full bg-accent">
-                        <div className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500" style={{ width: `${percentage}%` }} />
-                      </div>
+                       <div className="h-1.5 rounded-full bg-accent">
+                         <div className="h-full rounded-full bg-primary" style={{ width: `${percentage}%` }} />
+                       </div>
                     </div>
                   );
                 })
@@ -451,8 +537,8 @@ export default function FinancePageClient({
           <Card className="border-border/50 bg-card/50">
             <CardHeader className="flex flex-row items-center justify-between pb-3">
               <CardTitle className="text-sm">Daftar Piutang (Teman Berutang)</CardTitle>
-              <Dialog open={addDebtDialogOpen} onOpenChange={(open) => { setAddDebtDialogOpen(open); if (!open) { setDebtContactName(""); setDebtAmount(""); setDebtNotes(""); } }}>
-                <DialogTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8 text-indigo-400 hover:bg-accent">
+               <Dialog open={addDebtDialogOpen} onOpenChange={(open) => { setAddDebtDialogOpen(open); if (!open) { setDebtContactName(""); setDebtAmount(""); setDebtNotes(""); } }}>
+                 <DialogTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:bg-accent">
                   <Plus className="h-4 w-4" />
                 </Button>} />
                 <DialogContent className="sm:max-w-md">
@@ -484,7 +570,7 @@ export default function FinancePageClient({
                         Otomatis catat sebagai Pengeluaran
                       </Label>
                     </div>
-                    <Button onClick={handleCreateDebt} disabled={isPending} className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+                     <Button onClick={handleCreateDebt} disabled={isPending} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
                       {isPending ? "Menyimpan..." : "Simpan Catatan"}
                     </Button>
                   </div>
@@ -498,8 +584,8 @@ export default function FinancePageClient({
                 debts.map((item) => (
                   <div key={item.id} className="flex items-center justify-between rounded-lg bg-accent/30 p-3 hover:bg-accent/50 transition-colors">
                     <div>
-                      <div className="flex items-center gap-1.5">
-                        <User className="h-3 w-3 text-indigo-400" />
+                       <div className="flex items-center gap-1.5">
+                         <User className="h-3 w-3 text-primary" />
                         <span className="text-xs font-semibold">{item.contactName}</span>
                       </div>
                       {item.notes && <p className="text-[10px] text-muted-foreground mt-0.5">{item.notes}</p>}
@@ -550,10 +636,10 @@ export default function FinancePageClient({
             <CardTitle className="text-sm">Riwayat Transaksi</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {transactions.length === 0 ? (
-              <p className="text-center text-sm text-muted-foreground py-8">Belum ada transaksi.</p>
+            {filteredTransactions.length === 0 ? (
+              <p className="text-center text-sm text-muted-foreground py-8">Belum ada transaksi pada periode ini.</p>
             ) : (
-              transactions.slice(0, 20).map((tx) => (
+              filteredTransactions.map((tx) => (
                 <div key={tx.id} className="flex items-center justify-between rounded-lg bg-accent/30 p-3 group hover:bg-accent/50 transition-colors">
                   <div className="flex items-center gap-3">
                     <span className="text-lg">{CATEGORY_ICONS[tx.category] || "📦"}</span>
@@ -569,7 +655,7 @@ export default function FinancePageClient({
                       {tx.type === "INCOME" ? "+" : "-"}{formatRupiah(tx.amount)}
                     </span>
                     {tx.id.startsWith("mock-") ? null : (
-                      <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 text-destructive" onClick={() => handleDelete(tx.id)}>
+                       <Button variant="ghost" size="icon" className="h-7 w-7 opacity-100 lg:opacity-0 group-hover:opacity-100 text-destructive" onClick={() => handleDelete(tx.id)}>
                         <Trash2 className="h-3 w-3" />
                       </Button>
                     )}
@@ -618,7 +704,7 @@ export default function FinancePageClient({
                   Otomatis catat sebagai Pemasukan
                 </Label>
               </div>
-              <Button onClick={handlePayDebt} disabled={isPending} className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+               <Button onClick={handlePayDebt} disabled={isPending} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
                 {isPending ? "Mencatat..." : "Simpan Pembayaran"}
               </Button>
             </div>

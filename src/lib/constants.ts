@@ -32,11 +32,11 @@ export const STATUS_COLORS = {
 
 // Event type colors
 export const EVENT_TYPE_COLORS = {
-  CLASS: "#6366f1",
-  EXAM: "#ef4444",
-  PRESENTATION: "#f59e0b",
-  MEETING: "#3b82f6",
-  OTHER: "#8b5cf6",
+  CLASS: "#818cf8", // Muted indigo
+  EXAM: "#f87171", // Muted red
+  PRESENTATION: "#fbbf24", // Muted amber
+  MEETING: "#60a5fa", // Muted blue
+  OTHER: "#a78bfa", // Muted purple
 } as const;
 
 // Transaction categories

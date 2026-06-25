@@ -28,14 +28,7 @@ export default function DashboardLayout({
         )}
       >
         {/* Top Bar */}
-        <div className="flex items-center">
-          <div className="lg:hidden px-4">
-            <MobileNav />
-          </div>
-          <div className="flex-1">
-            <Topbar />
-          </div>
-        </div>
+        <Topbar />
 
         {/* Page Content */}
         <main className="flex-1 p-4 md:p-6 lg:p-8">

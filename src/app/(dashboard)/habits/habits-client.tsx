@@ -163,7 +163,7 @@ export default function HabitsPageClient({ initialHabits }: { initialHabits: Hab
           <p className="text-muted-foreground mt-1">Bangun kebiasaan baik setiap hari.</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger render={<Button className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 shadow-lg shadow-indigo-500/25" />}>
+          <DialogTrigger render={<Button className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm" />}>
             <Plus className="mr-2 h-4 w-4" />
             Kebiasaan Baru
           </DialogTrigger>
@@ -180,7 +180,7 @@ export default function HabitsPageClient({ initialHabits }: { initialHabits: Hab
                 <Label>Ikon</Label>
                 <Input value={icon} onChange={(e) => setIcon(e.target.value)} placeholder="✅" className="w-20" />
               </div>
-              <Button onClick={handleCreate} disabled={isPending} className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+              <Button onClick={handleCreate} disabled={isPending} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
                 {isPending ? "Membuat..." : "Buat Kebiasaan"}
               </Button>
             </div>
@@ -192,7 +192,7 @@ export default function HabitsPageClient({ initialHabits }: { initialHabits: Hab
       <div className="grid grid-cols-3 gap-3">
         <Card className="border-border/50 bg-card/50">
           <CardContent className="p-4 flex items-center gap-3">
-            <Target className="h-5 w-5 text-indigo-500" />
+            <Target className="h-5 w-5 text-foreground/70" />
             <div>
               <p className="text-xs text-muted-foreground">Hari Ini</p>
               <p className="text-xl font-bold">{completedToday}/{habits.length}</p>
@@ -249,7 +249,7 @@ export default function HabitsPageClient({ initialHabits }: { initialHabits: Hab
                       )}
                     </div>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 text-destructive" onClick={() => handleDelete(habit.id)}>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 opacity-100 lg:opacity-0 group-hover:opacity-100 text-destructive" onClick={() => handleDelete(habit.id)}>
                     <Trash2 className="h-3 w-3" />
                   </Button>
                 </div>
