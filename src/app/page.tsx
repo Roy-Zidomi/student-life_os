@@ -12,7 +12,6 @@ import {
   Bot,
   Sparkles,
   ArrowRight,
-  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -80,13 +79,6 @@ export default async function LandingPage() {
 
         {/* Hero */}
         <section className="flex flex-col items-center px-6 pt-20 pb-16 text-center md:pt-32 md:pb-24">
-          <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 mb-8">
-            <Zap className="h-3.5 w-3.5 text-primary" />
-            <span className="text-xs font-medium text-primary">
-              Platform Produktivitas All-in-One untuk Mahasiswa
-            </span>
-          </div>
-
           <h1 className="max-w-4xl text-4xl font-bold tracking-tight md:text-6xl lg:text-7xl">
             Kelola Hidupmu Sebagai{" "}
             <span className="text-primary">
