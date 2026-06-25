@@ -54,11 +54,11 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
     >
       {/* Logo */}
       <div className="flex h-16 items-center gap-2 border-b border-border px-4">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 shadow-md shadow-indigo-500/20">
-          <Sparkles className="h-4 w-4 text-white" />
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-xs">
+          <Sparkles className="h-4 w-4" />
         </div>
         {!collapsed && (
-          <span className="font-heading text-lg font-bold tracking-tight bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">
+          <span className="font-heading text-lg font-bold tracking-tight text-foreground">
             StudentOS
           </span>
         )}
@@ -77,14 +77,14 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
               className={cn(
                 "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
                 isActive
-                  ? "bg-indigo-500/10 text-indigo-500 shadow-sm"
+                  ? "bg-secondary text-foreground font-semibold shadow-xs"
                   : "text-muted-foreground hover:bg-accent hover:text-foreground"
               )}
             >
               <Icon
                 className={cn(
                   "h-4.5 w-4.5 shrink-0 transition-colors",
-                  isActive ? "text-indigo-500" : "text-muted-foreground group-hover:text-foreground"
+                  isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
                 )}
               />
               {!collapsed && <span>{item.label}</span>}

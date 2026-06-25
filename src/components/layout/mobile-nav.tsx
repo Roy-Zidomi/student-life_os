@@ -55,10 +55,10 @@ export function MobileNav() {
       <SheetContent side="left" className="w-[280px] p-0">
         <SheetTitle className="sr-only">Menu Navigasi</SheetTitle>
         <div className="flex h-16 items-center gap-2 border-b border-border px-4">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600">
-            <Sparkles className="h-4 w-4 text-white" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <Sparkles className="h-4 w-4" />
           </div>
-          <span className="font-heading text-lg font-bold tracking-tight bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">
+          <span className="font-heading text-lg font-bold tracking-tight text-foreground">
             StudentOS
           </span>
         </div>
@@ -76,11 +76,11 @@ export function MobileNav() {
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
                   isActive
-                    ? "bg-indigo-500/10 text-indigo-500"
+                    ? "bg-secondary text-foreground font-semibold"
                     : "text-muted-foreground hover:bg-accent hover:text-foreground"
                 )}
               >
-                <Icon className={cn("h-4.5 w-4.5", isActive ? "text-indigo-500" : "")} />
+                <Icon className={cn("h-4.5 w-4.5", isActive ? "text-foreground" : "")} />
                 <span>{item.label}</span>
               </Link>
             );

@@ -76,15 +76,15 @@ export function Topbar() {
   const getIcon = (type: AppNotification["type"], severity: AppNotification["severity"]) => {
     switch (type) {
       case "task":
-        return <CheckSquare className={`h-4 w-4 ${severity === 'danger' ? 'text-red-500' : 'text-amber-500'}`} />;
+        return <CheckSquare className={`h-4 w-4 ${severity === 'danger' ? 'text-red-500/80' : 'text-amber-500/80'}`} />;
       case "event":
-        return <Calendar className="h-4 w-4 text-blue-500" />;
+        return <Calendar className="h-4 w-4 text-foreground/75" />;
       case "wishlist":
-        return <Heart className="h-4 w-4 text-emerald-500 fill-emerald-500" />;
+        return <Heart className="h-4 w-4 text-foreground/75 fill-foreground/30" />;
       case "habit":
-        return <Target className="h-4 w-4 text-indigo-500" />;
+        return <Target className="h-4 w-4 text-foreground/75" />;
       default:
-        return <AlertCircle className="h-4 w-4 text-zinc-500" />;
+        return <AlertCircle className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
@@ -97,7 +97,7 @@ export function Topbar() {
       case "success":
         return "bg-emerald-500/10 border-emerald-500/20";
       default:
-        return "bg-zinc-500/10 border-zinc-500/20";
+        return "bg-secondary border-border";
     }
   };
 
@@ -118,7 +118,7 @@ export function Topbar() {
               <Button variant="ghost" size="icon" className="h-9 w-9 relative">
                 <Bell className="h-4 w-4" />
                 {activeNotifications.length > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-indigo-500 text-[10px] font-bold text-white animate-pulse">
+                  <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold animate-pulse">
                     {activeNotifications.length}
                   </span>
                 )}
@@ -128,7 +128,7 @@ export function Topbar() {
           <PopoverContent className="w-80 p-0 sm:w-96 border border-border bg-popover text-popover-foreground shadow-lg rounded-xl overflow-hidden" align="end">
             <div className="flex items-center justify-between border-b border-border p-4 bg-muted/40">
               <div className="flex items-center gap-2">
-                <Bell className="h-4 w-4 text-indigo-500" />
+                <Bell className="h-4 w-4 text-foreground/80" />
                 <span className="font-semibold text-sm">Notifikasi</span>
               </div>
               {activeNotifications.length > 0 && (
