@@ -14,6 +14,25 @@ import { getGPAStats } from "@/actions/gpa.actions";
 import { getTasks } from "@/actions/task.actions";
 import { getFinanceStats } from "@/actions/finance.actions";
 import { getStudyStats } from "@/actions/study.actions";
+import { getEvents } from "@/actions/event.actions";
+import { format } from "date-fns";
+import { id as localeId } from "date-fns/locale";
+
+const EVENT_TYPE_LABELS: Record<string, string> = {
+  CLASS: "Kuliah",
+  EXAM: "Ujian",
+  PRESENTATION: "Presentasi",
+  MEETING: "Rapat",
+  OTHER: "Agenda Lain",
+};
+
+const EVENT_TYPE_COLORS: Record<string, { border: string; bg: string }> = {
+  CLASS: { border: "border-l-[#818cf8]", bg: "bg-[#818cf8]/5" },
+  EXAM: { border: "border-l-[#f87171]", bg: "bg-[#f87171]/5" },
+  PRESENTATION: { border: "border-l-[#fbbf24]", bg: "bg-[#fbbf24]/5" },
+  MEETING: { border: "border-l-[#60a5fa]", bg: "bg-[#60a5fa]/5" },
+  OTHER: { border: "border-l-[#a78bfa]", bg: "bg-[#a78bfa]/5" },
+};
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -52,11 +71,12 @@ function StatCard({
 }
 
 export default async function DashboardPage() {
-  const [gpaStats, tasks, financeStats, studyStats] = await Promise.all([
+  const [gpaStats, tasks, financeStats, studyStats, events] = await Promise.all([
     getGPAStats(),
     getTasks(),
     getFinanceStats(),
     getStudyStats(),
+    getEvents(),
   ]);
 
   // Tasks math
@@ -78,6 +98,55 @@ export default async function DashboardPage() {
   // Format rupiah
   const formatRupiah = (amount: number) =>
     new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(amount);
+
+  // Filter today's events from calendar events
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const endOfToday = new Date();
+  endOfToday.setHours(23, 59, 59, 999);
+
+  const todayEvents = events.filter((e) => {
+    const start = new Date(e.startDate);
+    const end = new Date(e.endDate);
+    return start <= endOfToday && end >= startOfToday;
+  });
+
+  // Filter upcoming deadlines (tasks and exam/presentation events within 1 month from now)
+  const oneMonthFromNow = new Date();
+  oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
+
+  const taskDeadlines = tasks
+    .filter((t) => {
+      if (t.status === "DONE" || !t.deadline) return false;
+      const dl = new Date(t.deadline);
+      return dl <= oneMonthFromNow;
+    })
+    .map((t) => ({
+      id: t.id,
+      title: t.title,
+      date: new Date(t.deadline!),
+      type: "TASK" as const,
+      priority: t.priority,
+    }));
+
+  const eventDeadlines = events
+    .filter((e) => {
+      const isDeadlineType = e.type === "EXAM" || e.type === "PRESENTATION";
+      if (!isDeadlineType) return false;
+      const start = new Date(e.startDate);
+      return start >= startOfToday && start <= oneMonthFromNow;
+    })
+    .map((e) => ({
+      id: e.id,
+      title: e.title,
+      date: new Date(e.startDate),
+      type: "EVENT" as const,
+      eventType: e.type,
+    }));
+
+  const allUpcomingDeadlines = [...taskDeadlines, ...eventDeadlines].sort(
+    (a, b) => a.date.getTime() - b.date.getTime()
+  );
 
   return (
     <div className="space-y-8">
@@ -135,25 +204,33 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {[
-                { time: "08:00", title: "Algoritma & Pemrograman", type: "CLASS", color: "border-l-indigo-500/50 bg-indigo-500/5" },
-                { time: "10:00", title: "Basis Data", type: "CLASS", color: "border-l-blue-500/50 bg-blue-500/5" },
-                { time: "13:00", title: "Rapat Kelompok Proyek", type: "MEETING", color: "border-l-amber-500/50 bg-amber-500/5" },
-                { time: "15:00", title: "Praktikum Jaringan", type: "CLASS", color: "border-l-emerald-500/50 bg-emerald-500/5" },
-              ].map((event, i) => (
-                <div
-                  key={i}
-                  className={`flex items-center gap-4 rounded-lg border-l-4 ${event.color} p-3 transition-colors hover:bg-accent/20`}
-                >
-                  <span className="text-sm font-mono font-medium text-muted-foreground w-12">
-                    {event.time}
-                  </span>
-                  <div>
-                    <p className="text-sm font-medium">{event.title}</p>
-                    <p className="text-xs text-muted-foreground">{event.type}</p>
-                  </div>
+              {todayEvents.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <p className="text-sm text-muted-foreground">Tidak ada jadwal hari ini</p>
                 </div>
-              ))}
+              ) : (
+                todayEvents.map((event) => {
+                  const startTime = format(new Date(event.startDate), "HH:mm");
+                  const colors = EVENT_TYPE_COLORS[event.type] || EVENT_TYPE_COLORS.OTHER;
+                  const label = EVENT_TYPE_LABELS[event.type] || event.type;
+                  return (
+                    <div
+                      key={event.id}
+                      className={`flex items-center gap-4 rounded-lg border-l-4 ${colors.border} ${colors.bg} p-3 transition-colors hover:bg-accent/20`}
+                    >
+                      <span className="text-sm font-mono font-medium text-muted-foreground w-12">
+                        {startTime}
+                      </span>
+                      <div>
+                        <p className="text-sm font-medium">{event.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {label} {event.location ? `• ${event.location}` : ""}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </CardContent>
         </Card>
@@ -168,32 +245,55 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {[
-                { title: "Tugas Algoritma #5", deadline: "Besok", priority: "HIGH" },
-                { title: "Laporan Praktikum Jaringan", deadline: "2 hari lagi", priority: "HIGH" },
-                { title: "Quiz Basis Data", deadline: "3 hari lagi", priority: "MEDIUM" },
-                { title: "Presentasi Proyek", deadline: "5 hari lagi", priority: "MEDIUM" },
-              ].map((task, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between rounded-lg bg-accent/20 p-3 transition-colors hover:bg-accent/40"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`h-2 w-2 rounded-full ${task.priority === "HIGH" ? "bg-red-500/60" : "bg-amber-500/60"}`} />
-                    <div>
-                      <p className="text-sm font-medium">{task.title}</p>
-                      <p className="text-xs text-muted-foreground">{task.deadline}</p>
-                    </div>
-                  </div>
-                  <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                    task.priority === "HIGH"
-                      ? "bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/15"
-                      : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/15"
-                  }`}>
-                    {task.priority === "HIGH" ? "Tinggi" : "Sedang"}
-                  </span>
+              {allUpcomingDeadlines.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <p className="text-sm text-muted-foreground">Tidak ada deadline dalam 1 bulan ke depan</p>
                 </div>
-              ))}
+              ) : (
+                allUpcomingDeadlines.slice(0, 5).map((item) => {
+                  const formattedDate = format(item.date, "dd MMM yyyy, HH:mm", { locale: localeId });
+                  
+                  let badgeText = "";
+                  let badgeColor = "";
+                  let dotColor = "";
+
+                  if (item.type === "TASK") {
+                    const priorityText = item.priority === "HIGH" ? "Tinggi" : item.priority === "MEDIUM" ? "Sedang" : "Rendah";
+                    badgeText = `Tugas (${priorityText})`;
+                    badgeColor = item.priority === "HIGH"
+                      ? "bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/15"
+                      : item.priority === "MEDIUM"
+                      ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/15"
+                      : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/15";
+                    dotColor = item.priority === "HIGH" ? "bg-red-500/60" : item.priority === "MEDIUM" ? "bg-amber-500/60" : "bg-blue-500/60";
+                  } else {
+                    const typeLabel = item.eventType === "EXAM" ? "Ujian" : "Presentasi";
+                    badgeText = typeLabel;
+                    badgeColor = item.eventType === "EXAM"
+                      ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/15"
+                      : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/15";
+                    dotColor = item.eventType === "EXAM" ? "bg-rose-500/60" : "bg-amber-500/60";
+                  }
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between rounded-lg bg-accent/20 p-3 transition-colors hover:bg-accent/40"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`h-2 w-2 rounded-full ${dotColor}`} />
+                        <div>
+                          <p className="text-sm font-medium">{item.title}</p>
+                          <p className="text-xs text-muted-foreground">{formattedDate}</p>
+                        </div>
+                      </div>
+                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${badgeColor}`}>
+                        {badgeText}
+                      </span>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </CardContent>
         </Card>
