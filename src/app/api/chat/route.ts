@@ -2,16 +2,31 @@ import { google } from "@ai-sdk/google";
 import { streamText, convertToModelMessages } from "ai";
 import { prisma } from "@/lib/prisma";
 import { ensureUser } from "@/lib/user";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { checkRateLimit, CHAT_LIMIT } from "@/lib/rate-limit";
+import { z } from "zod";
 
 export const maxDuration = 30;
+
+// V-01 fix: Zod validation for incoming chat messages
+// Validates structure and bounds while allowing additional SDK-required fields
+const chatMessageSchema = z.object({
+  messages: z
+    .array(
+      z.object({
+        role: z.enum(["user", "assistant", "system"]),
+        content: z.string().max(10_000, "Pesan terlalu panjang"),
+      }).passthrough() // Allow additional fields from AI SDK UI format
+    )
+    .min(1, "Minimal 1 pesan")
+    .max(50, "Terlalu banyak pesan dalam satu percakapan"),
+}).passthrough();
 
 export async function POST(req: Request) {
   try {
     const user = await ensureUser();
 
     // Rate limiting — 10 requests per minute per user
-    const rateCheck = checkRateLimit(`chat:${user.id}`);
+    const rateCheck = checkRateLimit(`chat:${user.id}`, CHAT_LIMIT);
     if (!rateCheck.allowed) {
       return new Response(
         JSON.stringify({
@@ -27,7 +42,22 @@ export async function POST(req: Request) {
       );
     }
 
-    const { messages } = await req.json();
+    // V-01 fix: Validate request body with Zod
+    const body = await req.json();
+    const parseResult = chatMessageSchema.safeParse(body);
+
+    if (!parseResult.success) {
+      return new Response(
+        JSON.stringify({ error: "Format pesan tidak valid." }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Use the original body.messages to preserve full UIMessage type for AI SDK
+    const { messages } = body;
 
     // Convert UI messages to model messages (required in Vercel AI SDK v6)
     const modelMessages = await convertToModelMessages(messages);
@@ -37,6 +67,7 @@ export async function POST(req: Request) {
       prisma.task.findMany({
         where: { userId: user.id },
         orderBy: { deadline: "asc" },
+        take: 50,
       }),
       prisma.transaction.findMany({
         where: { userId: user.id },
@@ -46,10 +77,12 @@ export async function POST(req: Request) {
       prisma.course.findMany({
         where: { userId: user.id },
         orderBy: { semester: "asc" },
+        take: 100,
       }),
       prisma.habit.findMany({
         where: { userId: user.id },
         include: { logs: true },
+        take: 50,
       }),
     ]);
 
@@ -110,11 +143,12 @@ Pedoman menjawab:
     });
 
     return result.toUIMessageStreamResponse();
-  } catch (error: any) {
-    console.error("AI Assistant Route Error:", error?.message || "Unknown error");
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("AI Assistant Route Error:", message);
     
     // Check if it's an API quota / rate limit failure from Google
-    const isQuotaError = error?.message?.includes("quota") || error?.message?.includes("limit");
+    const isQuotaError = message.includes("quota") || message.includes("limit");
     const errorMessage = isQuotaError
       ? "Batas kuota API telah tercapai. Silakan coba lagi nanti."
       : "Terjadi kesalahan pada AI Assistant. Silakan coba lagi nanti.";

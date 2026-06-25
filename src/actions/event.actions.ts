@@ -3,7 +3,11 @@
 import { prisma } from "@/lib/prisma";
 import { ensureUser } from "@/lib/user";
 import { eventSchema } from "@/validators/event.schema";
+import { cuidSchema, checkRateLimit } from "@/lib/sanitize";
+import { ACTION_WRITE_LIMIT } from "@/lib/rate-limit";
 import { revalidatePath } from "next/cache";
+
+const MAX_RESULTS = 500;
 
 export async function getEvents(startDate?: Date, endDate?: Date) {
   const user = await ensureUser();
@@ -30,6 +34,7 @@ export async function getEvents(startDate?: Date, endDate?: Date) {
   const events = await prisma.event.findMany({
     where,
     orderBy: { startDate: "asc" },
+    take: MAX_RESULTS,
   });
 
   return events;
@@ -37,6 +42,12 @@ export async function getEvents(startDate?: Date, endDate?: Date) {
 
 export async function createEvent(data: unknown) {
   const user = await ensureUser();
+
+  const rateCheck = checkRateLimit(`action:event:create:${user.id}`, ACTION_WRITE_LIMIT);
+  if (!rateCheck.allowed) {
+    return { success: false, error: "Terlalu banyak permintaan. Coba lagi nanti." };
+  }
+
   const parsed = eventSchema.parse(data);
 
   const event = await prisma.event.create({
@@ -59,10 +70,17 @@ export async function createEvent(data: unknown) {
 
 export async function updateEvent(id: string, data: unknown) {
   const user = await ensureUser();
+  const validatedId = cuidSchema.parse(id);
+
+  const rateCheck = checkRateLimit(`action:event:update:${user.id}`, ACTION_WRITE_LIMIT);
+  if (!rateCheck.allowed) {
+    return { success: false, error: "Terlalu banyak permintaan. Coba lagi nanti." };
+  }
+
   const parsed = eventSchema.partial().parse(data);
 
   const existing = await prisma.event.findFirst({
-    where: { id, userId: user.id },
+    where: { id: validatedId, userId: user.id },
   });
 
   if (!existing) {
@@ -74,7 +92,7 @@ export async function updateEvent(id: string, data: unknown) {
   if (parsed.endDate) updateData.endDate = new Date(parsed.endDate);
 
   const event = await prisma.event.update({
-    where: { id },
+    where: { id: validatedId },
     data: updateData,
   });
 
@@ -85,16 +103,22 @@ export async function updateEvent(id: string, data: unknown) {
 
 export async function deleteEvent(id: string) {
   const user = await ensureUser();
+  const validatedId = cuidSchema.parse(id);
+
+  const rateCheck = checkRateLimit(`action:event:delete:${user.id}`, ACTION_WRITE_LIMIT);
+  if (!rateCheck.allowed) {
+    return { success: false, error: "Terlalu banyak permintaan. Coba lagi nanti." };
+  }
 
   const existing = await prisma.event.findFirst({
-    where: { id, userId: user.id },
+    where: { id: validatedId, userId: user.id },
   });
 
   if (!existing) {
     return { success: false, error: "Event tidak ditemukan" };
   }
 
-  await prisma.event.delete({ where: { id } });
+  await prisma.event.delete({ where: { id: validatedId } });
 
   revalidatePath("/calendar");
   revalidatePath("/dashboard");

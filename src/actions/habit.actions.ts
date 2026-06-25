@@ -3,6 +3,8 @@
 import { prisma } from "@/lib/prisma";
 import { ensureUser } from "@/lib/user";
 import { habitSchema } from "@/validators/habit.schema";
+import { cuidSchema, checkRateLimit } from "@/lib/sanitize";
+import { ACTION_WRITE_LIMIT } from "@/lib/rate-limit";
 import { revalidatePath } from "next/cache";
 import { startOfDay, subDays, differenceInDays } from "date-fns";
 
@@ -22,6 +24,7 @@ export async function getHabits() {
       },
     },
     orderBy: { createdAt: "asc" },
+    take: 100,
   });
 
   return habits;
@@ -29,6 +32,12 @@ export async function getHabits() {
 
 export async function createHabit(data: unknown) {
   const user = await ensureUser();
+
+  const rateCheck = checkRateLimit(`action:habit:create:${user.id}`, ACTION_WRITE_LIMIT);
+  if (!rateCheck.allowed) {
+    return { success: false, error: "Terlalu banyak permintaan. Coba lagi nanti." };
+  }
+
   const parsed = habitSchema.parse(data);
 
   const habit = await prisma.habit.create({
@@ -44,16 +53,22 @@ export async function createHabit(data: unknown) {
 
 export async function deleteHabit(id: string) {
   const user = await ensureUser();
+  const validatedId = cuidSchema.parse(id);
+
+  const rateCheck = checkRateLimit(`action:habit:delete:${user.id}`, ACTION_WRITE_LIMIT);
+  if (!rateCheck.allowed) {
+    return { success: false, error: "Terlalu banyak permintaan. Coba lagi nanti." };
+  }
 
   const existing = await prisma.habit.findFirst({
-    where: { id, userId: user.id },
+    where: { id: validatedId, userId: user.id },
   });
 
   if (!existing) {
     return { success: false, error: "Kebiasaan tidak ditemukan" };
   }
 
-  await prisma.habit.delete({ where: { id } });
+  await prisma.habit.delete({ where: { id: validatedId } });
 
   revalidatePath("/habits");
   return { success: true };
@@ -61,11 +76,17 @@ export async function deleteHabit(id: string) {
 
 export async function toggleHabitLog(habitId: string, date: Date) {
   const user = await ensureUser();
+  const validatedHabitId = cuidSchema.parse(habitId);
   const dayStart = startOfDay(date);
+
+  const rateCheck = checkRateLimit(`action:habit:toggle:${user.id}`, ACTION_WRITE_LIMIT);
+  if (!rateCheck.allowed) {
+    return { success: false, error: "Terlalu banyak permintaan. Coba lagi nanti." };
+  }
 
   // Verify habit ownership
   const habit = await prisma.habit.findFirst({
-    where: { id: habitId, userId: user.id },
+    where: { id: validatedHabitId, userId: user.id },
   });
 
   if (!habit) {
@@ -76,7 +97,7 @@ export async function toggleHabitLog(habitId: string, date: Date) {
   const existingLog = await prisma.habitLog.findUnique({
     where: {
       habitId_date: {
-        habitId,
+        habitId: validatedHabitId,
         date: dayStart,
       },
     },
@@ -87,7 +108,7 @@ export async function toggleHabitLog(habitId: string, date: Date) {
   } else {
     await prisma.habitLog.create({
       data: {
-        habitId,
+        habitId: validatedHabitId,
         userId: user.id,
         date: dayStart,
         completed: true,
@@ -102,9 +123,10 @@ export async function toggleHabitLog(habitId: string, date: Date) {
 
 export async function getHabitStats(habitId: string) {
   const user = await ensureUser();
+  const validatedHabitId = cuidSchema.parse(habitId);
 
   const habit = await prisma.habit.findFirst({
-    where: { id: habitId, userId: user.id },
+    where: { id: validatedHabitId, userId: user.id },
     include: {
       logs: {
         where: { completed: true },

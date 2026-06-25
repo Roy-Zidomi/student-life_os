@@ -3,11 +3,19 @@
 import { prisma } from "@/lib/prisma";
 import { ensureUser } from "@/lib/user";
 import { studySessionSchema } from "@/validators/study.schema";
+import { cuidSchema, checkRateLimit } from "@/lib/sanitize";
+import { ACTION_WRITE_LIMIT } from "@/lib/rate-limit";
 import { revalidatePath } from "next/cache";
 import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfDay, endOfDay } from "date-fns";
 
 export async function createStudySession(data: unknown) {
   const user = await ensureUser();
+
+  const rateCheck = checkRateLimit(`action:study:create:${user.id}`, ACTION_WRITE_LIMIT);
+  if (!rateCheck.allowed) {
+    return { success: false, error: "Terlalu banyak permintaan. Coba lagi nanti." };
+  }
+
   const parsed = studySessionSchema.parse(data);
 
   const session = await prisma.studySession.create({
@@ -91,16 +99,22 @@ export async function getStudyStats() {
 
 export async function deleteStudySession(id: string) {
   const user = await ensureUser();
+  const validatedId = cuidSchema.parse(id);
+
+  const rateCheck = checkRateLimit(`action:study:delete:${user.id}`, ACTION_WRITE_LIMIT);
+  if (!rateCheck.allowed) {
+    return { success: false, error: "Terlalu banyak permintaan. Coba lagi nanti." };
+  }
 
   const existing = await prisma.studySession.findFirst({
-    where: { id, userId: user.id },
+    where: { id: validatedId, userId: user.id },
   });
 
   if (!existing) {
     return { success: false, error: "Sesi belajar tidak ditemukan" };
   }
 
-  await prisma.studySession.delete({ where: { id } });
+  await prisma.studySession.delete({ where: { id: validatedId } });
 
   revalidatePath("/study");
   revalidatePath("/dashboard");

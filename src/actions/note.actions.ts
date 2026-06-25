@@ -3,7 +3,11 @@
 import { prisma } from "@/lib/prisma";
 import { ensureUser } from "@/lib/user";
 import { noteSchema } from "@/validators/note.schema";
+import { cuidSchema, checkRateLimit } from "@/lib/sanitize";
+import { ACTION_WRITE_LIMIT } from "@/lib/rate-limit";
 import { revalidatePath } from "next/cache";
+
+const MAX_RESULTS = 500;
 
 export async function getNotes(search?: string) {
   const user = await ensureUser();
@@ -20,6 +24,7 @@ export async function getNotes(search?: string) {
   const notes = await prisma.note.findMany({
     where,
     orderBy: [{ isPinned: "desc" }, { updatedAt: "desc" }],
+    take: MAX_RESULTS,
   });
 
   return notes;
@@ -27,9 +32,10 @@ export async function getNotes(search?: string) {
 
 export async function getNoteById(id: string) {
   const user = await ensureUser();
+  const validatedId = cuidSchema.parse(id);
 
   const note = await prisma.note.findFirst({
-    where: { id, userId: user.id },
+    where: { id: validatedId, userId: user.id },
   });
 
   return note;
@@ -37,6 +43,12 @@ export async function getNoteById(id: string) {
 
 export async function createNote(data: unknown) {
   const user = await ensureUser();
+
+  const rateCheck = checkRateLimit(`action:note:create:${user.id}`, ACTION_WRITE_LIMIT);
+  if (!rateCheck.allowed) {
+    return { success: false, error: "Terlalu banyak permintaan. Coba lagi nanti." };
+  }
+
   const parsed = noteSchema.parse(data);
 
   const note = await prisma.note.create({
@@ -52,10 +64,17 @@ export async function createNote(data: unknown) {
 
 export async function updateNote(id: string, data: unknown) {
   const user = await ensureUser();
+  const validatedId = cuidSchema.parse(id);
+
+  const rateCheck = checkRateLimit(`action:note:update:${user.id}`, ACTION_WRITE_LIMIT);
+  if (!rateCheck.allowed) {
+    return { success: false, error: "Terlalu banyak permintaan. Coba lagi nanti." };
+  }
+
   const parsed = noteSchema.partial().parse(data);
 
   const existing = await prisma.note.findFirst({
-    where: { id, userId: user.id },
+    where: { id: validatedId, userId: user.id },
   });
 
   if (!existing) {
@@ -63,27 +82,33 @@ export async function updateNote(id: string, data: unknown) {
   }
 
   const note = await prisma.note.update({
-    where: { id },
+    where: { id: validatedId },
     data: parsed,
   });
 
   revalidatePath("/notes");
-  revalidatePath(`/notes/${id}`);
+  revalidatePath(`/notes/${validatedId}`);
   return { success: true, data: note };
 }
 
 export async function deleteNote(id: string) {
   const user = await ensureUser();
+  const validatedId = cuidSchema.parse(id);
+
+  const rateCheck = checkRateLimit(`action:note:delete:${user.id}`, ACTION_WRITE_LIMIT);
+  if (!rateCheck.allowed) {
+    return { success: false, error: "Terlalu banyak permintaan. Coba lagi nanti." };
+  }
 
   const existing = await prisma.note.findFirst({
-    where: { id, userId: user.id },
+    where: { id: validatedId, userId: user.id },
   });
 
   if (!existing) {
     return { success: false, error: "Catatan tidak ditemukan" };
   }
 
-  await prisma.note.delete({ where: { id } });
+  await prisma.note.delete({ where: { id: validatedId } });
 
   revalidatePath("/notes");
   return { success: true };
@@ -91,9 +116,15 @@ export async function deleteNote(id: string) {
 
 export async function togglePinNote(id: string) {
   const user = await ensureUser();
+  const validatedId = cuidSchema.parse(id);
+
+  const rateCheck = checkRateLimit(`action:note:pin:${user.id}`, ACTION_WRITE_LIMIT);
+  if (!rateCheck.allowed) {
+    return { success: false, error: "Terlalu banyak permintaan. Coba lagi nanti." };
+  }
 
   const existing = await prisma.note.findFirst({
-    where: { id, userId: user.id },
+    where: { id: validatedId, userId: user.id },
   });
 
   if (!existing) {
@@ -101,7 +132,7 @@ export async function togglePinNote(id: string) {
   }
 
   const note = await prisma.note.update({
-    where: { id },
+    where: { id: validatedId },
     data: { isPinned: !existing.isPinned },
   });
 

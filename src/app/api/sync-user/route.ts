@@ -2,7 +2,9 @@ import { prisma } from "@/lib/prisma";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-export async function GET() {
+// V-12 fix: Changed from GET to POST to prevent unintended triggers
+// via <img> tags, prefetch, or browser caching
+export async function POST() {
   try {
     const { userId } = await auth();
     if (!userId) {
@@ -15,7 +17,7 @@ export async function GET() {
     }
 
     // Upsert user in database
-    const user = await prisma.user.upsert({
+    await prisma.user.upsert({
       where: { clerkId: userId },
       update: {
         email: clerkUser.emailAddresses[0]?.emailAddress || "",
@@ -31,8 +33,9 @@ export async function GET() {
     });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Sync user error:", error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("Sync user error:", message);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

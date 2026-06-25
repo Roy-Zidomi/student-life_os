@@ -3,9 +3,13 @@
 import { prisma } from "@/lib/prisma";
 import { ensureUser } from "@/lib/user";
 import { courseSchema } from "@/validators/gpa.schema";
+import { cuidSchema, checkRateLimit } from "@/lib/sanitize";
+import { ACTION_WRITE_LIMIT } from "@/lib/rate-limit";
 import { GRADE_MAP } from "@/lib/constants";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+
+const MAX_RESULTS = 500;
 
 export async function getCourses() {
   const user = await ensureUser();
@@ -13,6 +17,7 @@ export async function getCourses() {
   const courses = await prisma.course.findMany({
     where: { userId: user.id },
     orderBy: [{ semester: "asc" }, { name: "asc" }],
+    take: MAX_RESULTS,
   });
 
   return courses;
@@ -20,6 +25,12 @@ export async function getCourses() {
 
 export async function createCourse(data: unknown) {
   const user = await ensureUser();
+
+  const rateCheck = checkRateLimit(`action:gpa:create:${user.id}`, ACTION_WRITE_LIMIT);
+  if (!rateCheck.allowed) {
+    return { success: false, error: "Terlalu banyak permintaan. Coba lagi nanti." };
+  }
+
   const parsed = courseSchema.parse(data);
 
   const gradePoint = parsed.grade ? GRADE_MAP[parsed.grade] ?? null : null;
@@ -42,10 +53,17 @@ export async function createCourse(data: unknown) {
 
 export async function updateCourse(id: string, data: unknown) {
   const user = await ensureUser();
+  const validatedId = cuidSchema.parse(id);
+
+  const rateCheck = checkRateLimit(`action:gpa:update:${user.id}`, ACTION_WRITE_LIMIT);
+  if (!rateCheck.allowed) {
+    return { success: false, error: "Terlalu banyak permintaan. Coba lagi nanti." };
+  }
+
   const parsed = courseSchema.partial().parse(data);
 
   const existing = await prisma.course.findFirst({
-    where: { id, userId: user.id },
+    where: { id: validatedId, userId: user.id },
   });
 
   if (!existing) {
@@ -58,7 +76,7 @@ export async function updateCourse(id: string, data: unknown) {
   }
 
   const course = await prisma.course.update({
-    where: { id },
+    where: { id: validatedId },
     data: updateData,
   });
 
@@ -69,16 +87,22 @@ export async function updateCourse(id: string, data: unknown) {
 
 export async function deleteCourse(id: string) {
   const user = await ensureUser();
+  const validatedId = cuidSchema.parse(id);
+
+  const rateCheck = checkRateLimit(`action:gpa:delete:${user.id}`, ACTION_WRITE_LIMIT);
+  if (!rateCheck.allowed) {
+    return { success: false, error: "Terlalu banyak permintaan. Coba lagi nanti." };
+  }
 
   const existing = await prisma.course.findFirst({
-    where: { id, userId: user.id },
+    where: { id: validatedId, userId: user.id },
   });
 
   if (!existing) {
     return { success: false, error: "Mata kuliah tidak ditemukan" };
   }
 
-  await prisma.course.delete({ where: { id } });
+  await prisma.course.delete({ where: { id: validatedId } });
 
   revalidatePath("/gpa");
   revalidatePath("/dashboard");
@@ -91,6 +115,7 @@ export async function getGPAStats() {
   const courses = await prisma.course.findMany({
     where: { userId: user.id, gradePoint: { not: null } },
     orderBy: { semester: "asc" },
+    take: MAX_RESULTS,
   });
 
   // Calculate per-semester GPA (IPS)
@@ -133,13 +158,26 @@ const ALLOWED_MIME_TYPES = [
   "application/pdf",
 ];
 
+// Strict validation: only allow base64 characters
+const BASE64_REGEX = /^[A-Za-z0-9+/=]+$/;
+
 export async function parseTranscriptAction(base64Image: string, mimeType: string) {
   try {
     const user = await ensureUser();
 
+    const rateCheck = checkRateLimit(`action:gpa:transcript:${user.id}`, { windowMs: 60_000, maxRequests: 5 });
+    if (!rateCheck.allowed) {
+      return { success: false, error: "Terlalu banyak permintaan. Coba lagi nanti." };
+    }
+
     // Validate MIME type
     if (!ALLOWED_MIME_TYPES.includes(mimeType)) {
       return { success: false, error: "Tipe file tidak didukung. Gunakan PNG, JPG, WEBP, atau PDF." };
+    }
+
+    // Validate base64 format
+    if (!BASE64_REGEX.test(base64Image)) {
+      return { success: false, error: "Format file tidak valid." };
     }
 
     // Validate file size (base64 is ~33% larger than binary)
@@ -191,8 +229,9 @@ export async function parseTranscriptAction(base64Image: string, mimeType: strin
     });
 
     return { success: true, courses: object.courses };
-  } catch (error: any) {
-    console.error("Error parsing transcript:", error?.message || "Unknown error");
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("Error parsing transcript:", message);
     return { success: false, error: "Gagal memproses dokumen. Silakan coba lagi." };
   }
 }
@@ -213,6 +252,11 @@ const importCoursesSchema = z
 export async function importCoursesAction(courses: { semester: number; name: string; credits: number; grade: string | null }[]) {
   try {
     const user = await ensureUser();
+
+    const rateCheck = checkRateLimit(`action:gpa:import:${user.id}`, { windowMs: 60_000, maxRequests: 5 });
+    if (!rateCheck.allowed) {
+      return { success: false, error: "Terlalu banyak permintaan. Coba lagi nanti." };
+    }
 
     // Validate input with Zod
     const parsed = importCoursesSchema.parse(courses);
@@ -236,8 +280,9 @@ export async function importCoursesAction(courses: { semester: number; name: str
     revalidatePath("/gpa");
     revalidatePath("/dashboard");
     return { success: true, count: createdCourses.length };
-  } catch (error: any) {
-    console.error("Error importing courses:", error?.message || "Unknown error");
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("Error importing courses:", message);
     if (error instanceof z.ZodError) {
       return { success: false, error: "Data mata kuliah tidak valid. Periksa kembali format data." };
     }

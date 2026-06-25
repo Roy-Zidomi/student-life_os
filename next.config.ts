@@ -22,10 +22,18 @@ const nextConfig: NextConfig = {
               "camera=(), microphone=(), geolocation=(), browsing-topics=()",
           },
           {
+            key: "Cross-Origin-Opener-Policy",
+            value: "same-origin",
+          },
+          {
+            key: "Cross-Origin-Resource-Policy",
+            value: "same-origin",
+          },
+          {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.accounts.dev https://*.clerk.com",
+              "script-src 'self' 'unsafe-inline' https://*.clerk.accounts.dev https://*.clerk.com",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: blob: https://*.clerk.accounts.dev https://img.clerk.com https://*.supabase.co",
               "font-src 'self' https://fonts.gstatic.com",

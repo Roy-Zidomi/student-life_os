@@ -3,9 +3,13 @@
 import { prisma } from "@/lib/prisma";
 import { ensureUser } from "@/lib/user";
 import { transactionSchema } from "@/validators/finance.schema";
+import { cuidSchema, checkRateLimit } from "@/lib/sanitize";
+import { ACTION_WRITE_LIMIT } from "@/lib/rate-limit";
 import { revalidatePath } from "next/cache";
 import { startOfMonth, endOfMonth } from "date-fns";
 import { z } from "zod";
+
+const MAX_RESULTS = 500;
 
 export async function getTransactions(filters?: {
   type?: "INCOME" | "EXPENSE";
@@ -29,6 +33,7 @@ export async function getTransactions(filters?: {
   const transactions = await prisma.transaction.findMany({
     where,
     orderBy: { date: "desc" },
+    take: MAX_RESULTS,
   });
 
   return transactions;
@@ -36,6 +41,12 @@ export async function getTransactions(filters?: {
 
 export async function createTransaction(data: unknown) {
   const user = await ensureUser();
+
+  const rateCheck = checkRateLimit(`action:finance:create:${user.id}`, ACTION_WRITE_LIMIT);
+  if (!rateCheck.allowed) {
+    return { success: false, error: "Terlalu banyak permintaan. Coba lagi nanti." };
+  }
+
   const parsed = transactionSchema.parse(data);
 
   const transaction = await prisma.transaction.create({
@@ -56,10 +67,17 @@ export async function createTransaction(data: unknown) {
 
 export async function updateTransaction(id: string, data: unknown) {
   const user = await ensureUser();
+  const validatedId = cuidSchema.parse(id);
+
+  const rateCheck = checkRateLimit(`action:finance:update:${user.id}`, ACTION_WRITE_LIMIT);
+  if (!rateCheck.allowed) {
+    return { success: false, error: "Terlalu banyak permintaan. Coba lagi nanti." };
+  }
+
   const parsed = transactionSchema.partial().parse(data);
 
   const existing = await prisma.transaction.findFirst({
-    where: { id, userId: user.id },
+    where: { id: validatedId, userId: user.id },
   });
 
   if (!existing) {
@@ -67,7 +85,7 @@ export async function updateTransaction(id: string, data: unknown) {
   }
 
   const transaction = await prisma.transaction.update({
-    where: { id },
+    where: { id: validatedId },
     data: parsed,
   });
 
@@ -78,16 +96,22 @@ export async function updateTransaction(id: string, data: unknown) {
 
 export async function deleteTransaction(id: string) {
   const user = await ensureUser();
+  const validatedId = cuidSchema.parse(id);
+
+  const rateCheck = checkRateLimit(`action:finance:delete:${user.id}`, ACTION_WRITE_LIMIT);
+  if (!rateCheck.allowed) {
+    return { success: false, error: "Terlalu banyak permintaan. Coba lagi nanti." };
+  }
 
   const existing = await prisma.transaction.findFirst({
-    where: { id, userId: user.id },
+    where: { id: validatedId, userId: user.id },
   });
 
   if (!existing) {
     return { success: false, error: "Transaksi tidak ditemukan" };
   }
 
-  await prisma.transaction.delete({ where: { id } });
+  await prisma.transaction.delete({ where: { id: validatedId } });
 
   revalidatePath("/finance");
   revalidatePath("/dashboard");
@@ -106,6 +130,7 @@ export async function getFinanceStats(month?: Date) {
         lte: endOfMonth(targetMonth),
       },
     },
+    take: MAX_RESULTS,
   });
 
   const totalIncome = transactions
@@ -141,6 +166,11 @@ export async function getFinanceStats(month?: Date) {
 
 export async function updateInitialBalance(amount: number) {
   const user = await ensureUser();
+
+  const rateCheck = checkRateLimit(`action:finance:balance:${user.id}`, ACTION_WRITE_LIMIT);
+  if (!rateCheck.allowed) {
+    return { success: false, error: "Terlalu banyak permintaan. Coba lagi nanti." };
+  }
 
   // Validate amount
   const validatedAmount = z

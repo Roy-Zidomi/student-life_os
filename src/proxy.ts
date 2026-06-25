@@ -8,11 +8,13 @@ const isProtectedRoute = createRouteMatcher([
   "/study(.*)",
   "/habits(.*)",
   "/finance(.*)",
+  "/wishlist(.*)",
   "/gpa(.*)",
   "/analytics(.*)",
   "/ai-assistant(.*)",
   "/settings(.*)",
   "/api/chat(.*)",
+  "/api/sync-user(.*)",
 ]);
 
 // Next.js 16 requires a named `proxy` export (replaces `middleware.ts` default export)

@@ -7,6 +7,14 @@ const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 const createPrismaClient = () => {
   const pool = new pg.Pool({
     connectionString: process.env.DATABASE_URL,
+    // V-09 fix: Explicit SSL configuration for production security
+    ssl: process.env.NODE_ENV === "production"
+      ? { rejectUnauthorized: false } // Supabase uses self-signed certs via pooler
+      : undefined,
+    // Connection pool hardening
+    max: 10, // Maximum pool size
+    idleTimeoutMillis: 30_000, // Close idle connections after 30s
+    connectionTimeoutMillis: 10_000, // Fail if connection takes >10s
   });
   const adapter = new PrismaPg(pool);
   
