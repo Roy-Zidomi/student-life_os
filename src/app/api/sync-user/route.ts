@@ -30,7 +30,7 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json({ success: true, data: user });
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Sync user error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

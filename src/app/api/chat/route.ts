@@ -2,12 +2,31 @@ import { google } from "@ai-sdk/google";
 import { streamText, convertToModelMessages } from "ai";
 import { prisma } from "@/lib/prisma";
 import { ensureUser } from "@/lib/user";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
   try {
     const user = await ensureUser();
+
+    // Rate limiting — 10 requests per minute per user
+    const rateCheck = checkRateLimit(`chat:${user.id}`);
+    if (!rateCheck.allowed) {
+      return new Response(
+        JSON.stringify({
+          error: "Terlalu banyak permintaan. Silakan tunggu sebentar sebelum mengirim pesan lagi.",
+        }),
+        {
+          status: 429,
+          headers: {
+            "Content-Type": "application/json",
+            "Retry-After": String(Math.ceil(rateCheck.retryAfterMs / 1000)),
+          },
+        }
+      );
+    }
+
     const { messages } = await req.json();
 
     // Convert UI messages to model messages (required in Vercel AI SDK v6)
@@ -64,7 +83,6 @@ Kamu membantu mahasiswa menganalisis, mengelola, dan meningkatkan performa akade
 
 Berikut adalah data aktual mahasiswa yang sedang chat denganmu saat ini:
 - Nama: ${user.name || "Mahasiswa"}
-- Email: ${user.email}
 
 DATA AKADEMIK (MATA KULIAH):
 ${courseList || "Tidak ada mata kuliah terdaftar saat ini."}
@@ -82,7 +100,8 @@ Pedoman menjawab:
 1. Gunakan data di atas untuk menjawab pertanyaan yang relevan (misal: "Apa tugas terdekat?", "Kenapa uangku cepat habis?", "Bagaimana nilai IPS-ku?").
 2. Jika ada data yang kosong, beri tahu dengan sopan dan berikan saran bagaimana cara menambahkannya di aplikasi.
 3. Jawab dalam Bahasa Indonesia yang santun, ramah, memotivasi, dan bersahabat. Gunakan emoji secara wajar.
-4. Berikan saran yang solutif, terstruktur, dan mudah dipahami mahasiswa.`;
+4. Berikan saran yang solutif, terstruktur, dan mudah dipahami mahasiswa.
+5. JANGAN pernah menampilkan data sensitif seperti email, ID internal, atau informasi teknis database.`;
 
     const result = streamText({
       model: google("gemini-2.0-flash"),
@@ -92,13 +111,13 @@ Pedoman menjawab:
 
     return result.toUIMessageStreamResponse();
   } catch (error: any) {
-    console.error("AI Assistant Route Error:", error);
+    console.error("AI Assistant Route Error:", error?.message || "Unknown error");
     
     // Check if it's an API quota / rate limit failure from Google
     const isQuotaError = error?.message?.includes("quota") || error?.message?.includes("limit");
     const errorMessage = isQuotaError
-      ? "Batas kuota gratis (Free Tier) dari Gemini API Key Anda telah habis. Silakan coba lagi nanti atau gunakan kunci API dengan batas limit yang lebih besar."
-      : "Terjadi kesalahan pada AI Assistant. Silakan periksa kembali konfigurasi Gemini API Key Anda di file .env.";
+      ? "Batas kuota API telah tercapai. Silakan coba lagi nanti."
+      : "Terjadi kesalahan pada AI Assistant. Silakan coba lagi nanti.";
 
     return new Response(
       JSON.stringify({ error: errorMessage }),

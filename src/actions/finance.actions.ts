@@ -5,6 +5,7 @@ import { ensureUser } from "@/lib/user";
 import { transactionSchema } from "@/validators/finance.schema";
 import { revalidatePath } from "next/cache";
 import { startOfMonth, endOfMonth } from "date-fns";
+import { z } from "zod";
 
 export async function getTransactions(filters?: {
   type?: "INCOME" | "EXPENSE";
@@ -140,9 +141,18 @@ export async function getFinanceStats(month?: Date) {
 
 export async function updateInitialBalance(amount: number) {
   const user = await ensureUser();
+
+  // Validate amount
+  const validatedAmount = z
+    .number()
+    .min(0, "Saldo awal tidak boleh negatif")
+    .max(999_999_999_999, "Saldo awal terlalu besar")
+    .finite("Nilai tidak valid")
+    .parse(amount);
+
   await prisma.user.update({
     where: { id: user.id },
-    data: { initialBalance: amount },
+    data: { initialBalance: validatedAmount },
   });
   revalidatePath("/finance");
   revalidatePath("/dashboard");

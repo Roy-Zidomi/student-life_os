@@ -5,6 +5,7 @@ import { ensureUser } from "@/lib/user";
 import { courseSchema } from "@/validators/gpa.schema";
 import { GRADE_MAP } from "@/lib/constants";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
 export async function getCourses() {
   const user = await ensureUser();
@@ -122,13 +123,33 @@ export async function getGPAStats() {
   };
 }
 
+// --- Security constants for file upload ---
+const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB max
+const ALLOWED_MIME_TYPES = [
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/gif",
+  "application/pdf",
+];
+
 export async function parseTranscriptAction(base64Image: string, mimeType: string) {
   try {
     const user = await ensureUser();
+
+    // Validate MIME type
+    if (!ALLOWED_MIME_TYPES.includes(mimeType)) {
+      return { success: false, error: "Tipe file tidak didukung. Gunakan PNG, JPG, WEBP, atau PDF." };
+    }
+
+    // Validate file size (base64 is ~33% larger than binary)
+    const estimatedBytes = Math.ceil((base64Image.length * 3) / 4);
+    if (estimatedBytes > MAX_FILE_SIZE_BYTES) {
+      return { success: false, error: "Ukuran file terlalu besar. Maksimal 5MB." };
+    }
     
     const { generateObject } = await import("ai");
     const { google } = await import("@ai-sdk/google");
-    const { z } = await import("zod");
 
     const isPdf = mimeType === "application/pdf";
     const filePart = isPdf
@@ -171,17 +192,33 @@ export async function parseTranscriptAction(base64Image: string, mimeType: strin
 
     return { success: true, courses: object.courses };
   } catch (error: any) {
-    console.error("Error parsing transcript:", error);
-    return { success: false, error: error.message || "Gagal memproses dokumen" };
+    console.error("Error parsing transcript:", error?.message || "Unknown error");
+    return { success: false, error: "Gagal memproses dokumen. Silakan coba lagi." };
   }
 }
+
+// Zod schema for validating imported courses
+const importCourseSchema = z.object({
+  semester: z.number().int().min(1).max(14),
+  name: z.string().min(1).max(200),
+  credits: z.number().int().min(1).max(8),
+  grade: z.string().max(5).nullable(),
+});
+
+const importCoursesSchema = z
+  .array(importCourseSchema)
+  .min(1, "Minimal 1 mata kuliah")
+  .max(100, "Maksimal 100 mata kuliah per import");
 
 export async function importCoursesAction(courses: { semester: number; name: string; credits: number; grade: string | null }[]) {
   try {
     const user = await ensureUser();
+
+    // Validate input with Zod
+    const parsed = importCoursesSchema.parse(courses);
     
     const createdCourses = await prisma.$transaction(
-      courses.map((course) => {
+      parsed.map((course) => {
         const gradePoint = course.grade ? GRADE_MAP[course.grade] ?? null : null;
         return prisma.course.create({
           data: {
@@ -200,7 +237,10 @@ export async function importCoursesAction(courses: { semester: number; name: str
     revalidatePath("/dashboard");
     return { success: true, count: createdCourses.length };
   } catch (error: any) {
-    console.error("Error importing courses:", error);
-    return { success: false, error: error.message || "Gagal menyimpan mata kuliah" };
+    console.error("Error importing courses:", error?.message || "Unknown error");
+    if (error instanceof z.ZodError) {
+      return { success: false, error: "Data mata kuliah tidak valid. Periksa kembali format data." };
+    }
+    return { success: false, error: "Gagal menyimpan mata kuliah. Silakan coba lagi." };
   }
 }
