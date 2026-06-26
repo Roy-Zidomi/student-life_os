@@ -24,14 +24,14 @@ export default function DashboardLayout({
       <div
         className={cn(
           "flex flex-1 flex-col transition-all duration-300",
-          collapsed ? "lg:ml-[68px]" : "lg:ml-[240px]"
+          collapsed ? "lg:ml-[84px]" : "lg:ml-[256px]"
         )}
       >
         {/* Top Bar */}
         <Topbar />
 
         {/* Page Content */}
-        <main className="flex-1 p-4 md:p-6 lg:p-8">
+        <main className="flex-1 p-4 md:p-6 lg:p-8 lg:pl-0">
           {children}
         </main>
       </div>

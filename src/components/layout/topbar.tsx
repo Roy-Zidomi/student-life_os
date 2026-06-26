@@ -103,7 +103,7 @@ export function Topbar() {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-border/40 bg-card/60 backdrop-blur-md px-4 md:px-6">
+    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between bg-transparent border-none px-4 md:px-6">
       {/* Left - Page Title area */}
       <div className="flex items-center gap-4">
         <MobileNav />

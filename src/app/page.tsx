@@ -34,12 +34,12 @@ export default async function LandingPage() {
   return (
     <div className="relative min-h-screen overflow-hidden bg-background">
       {/* Glow Orbs background */}
-      <div className="absolute top-[10%] left-[-10%] w-[35rem] h-[35rem] rounded-full bg-indigo-600/10 dark:bg-indigo-600/15 blur-[120px] animate-pulse-glow" />
-      <div className="absolute top-[40%] right-[-10%] w-[40rem] h-[40rem] rounded-full bg-purple-600/10 dark:bg-purple-600/15 blur-[130px] animate-pulse-glow" style={{ animationDelay: "-4s" }} />
-      <div className="absolute bottom-[10%] left-[20%] w-[30rem] h-[30rem] rounded-full bg-pink-600/10 dark:bg-pink-600/10 blur-[110px] animate-pulse-glow" style={{ animationDelay: "-8s" }} />
+      <div className="absolute top-[10%] left-[-10%] w-[35rem] h-[35rem] rounded-full bg-[#0075FF]/10 dark:bg-[#0075FF]/15 blur-[120px] animate-pulse-glow" />
+      <div className="absolute top-[40%] right-[-10%] w-[40rem] h-[40rem] rounded-full bg-[#00F0FF]/10 dark:bg-[#00F0FF]/15 blur-[130px] animate-pulse-glow" style={{ animationDelay: "-4s" }} />
+      <div className="absolute bottom-[10%] left-[20%] w-[30rem] h-[30rem] rounded-full bg-blue-600/10 dark:bg-blue-600/10 blur-[110px] animate-pulse-glow" style={{ animationDelay: "-8s" }} />
 
       {/* Grid Overlay */}
-      <div className="fixed inset-0 bg-[linear-gradient(to_right,rgba(99,102,241,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(99,102,241,0.03)_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none" />
+      <div className="fixed inset-0 bg-[linear-gradient(to_right,rgba(0,117,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,117,255,0.03)_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none" />
 
       <div className="relative z-10">
         {/* Navbar */}

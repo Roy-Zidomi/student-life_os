@@ -48,24 +48,24 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-border/40 bg-card/60 backdrop-blur-md transition-all duration-300",
+        "fixed left-4 top-4 bottom-4 z-40 flex flex-col rounded-3xl border border-white/8 bg-card/60 backdrop-blur-xl transition-all duration-300 shadow-xl",
         collapsed ? "w-[68px]" : "w-[240px]"
       )}
     >
       {/* Logo */}
-      <div className="flex h-16 items-center gap-2 border-b border-border/40 px-4">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-          <Sparkles className="h-4 w-4" />
+      <div className="flex h-16 items-center justify-center gap-2 border-b border-white/8 px-4">
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary text-white shadow-md shadow-primary/25">
+          <Sparkles className="h-3.5 w-3.5" />
         </div>
         {!collapsed && (
-          <span className="font-heading text-lg font-bold tracking-tight text-foreground bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/80">
-            StudentOS
+          <span className="font-heading text-sm font-extrabold tracking-widest text-white uppercase bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">
+            STUDENTOS
           </span>
         )}
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+      <nav className="flex-1 space-y-2 overflow-y-auto px-3 py-4">
         {NAV_ITEMS.map((item) => {
           const Icon = iconMap[item.icon];
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
@@ -75,19 +75,21 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 border-l-2",
+                "group flex items-center gap-3 rounded-2xl px-2 py-2 text-sm font-medium transition-all duration-200",
                 isActive
-                  ? "border-primary bg-primary/10 text-primary font-semibold shadow-xs"
-                  : "border-transparent text-muted-foreground hover:bg-accent/40 hover:text-foreground"
+                  ? "bg-[#1a1f37]/70 text-white font-bold shadow-md"
+                  : "text-muted-foreground hover:bg-white/5 hover:text-white"
               )}
             >
-              <Icon
-                className={cn(
-                  "h-4.5 w-4.5 shrink-0 transition-colors",
-                  isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
-                )}
-              />
-              {!collapsed && <span>{item.label}</span>}
+              <div className={cn(
+                "flex h-7 w-7 shrink-0 items-center justify-center rounded-xl transition-all duration-300",
+                isActive
+                  ? "bg-primary text-white shadow-md shadow-primary/30"
+                  : "bg-[#1a1f37] text-primary"
+              )}>
+                <Icon className="h-3.5 w-3.5" />
+              </div>
+              {!collapsed && <span className="text-xs font-semibold tracking-wide">{item.label}</span>}
             </Link>
           );
 
@@ -107,12 +109,12 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       </nav>
 
       {/* Toggle Button */}
-      <div className="border-t border-border p-3">
+      <div className="border-t border-white/8 p-3">
         <Button
           variant="ghost"
           size="sm"
           onClick={onToggle}
-          className="w-full justify-center"
+          className="w-full justify-center text-muted-foreground hover:text-white hover:bg-white/5"
         >
           {collapsed ? (
             <ChevronRight className="h-4 w-4" />
