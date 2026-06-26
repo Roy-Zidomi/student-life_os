@@ -48,17 +48,17 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-border bg-card transition-all duration-300",
+        "fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-border/40 bg-card/60 backdrop-blur-md transition-all duration-300",
         collapsed ? "w-[68px]" : "w-[240px]"
       )}
     >
       {/* Logo */}
-      <div className="flex h-16 items-center gap-2 border-b border-border px-4">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-xs">
+      <div className="flex h-16 items-center gap-2 border-b border-border/40 px-4">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
           <Sparkles className="h-4 w-4" />
         </div>
         {!collapsed && (
-          <span className="font-heading text-lg font-bold tracking-tight text-foreground">
+          <span className="font-heading text-lg font-bold tracking-tight text-foreground bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/80">
             StudentOS
           </span>
         )}
@@ -75,16 +75,16 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 border-l-2",
                 isActive
-                  ? "bg-secondary text-foreground font-semibold shadow-xs"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                  ? "border-primary bg-primary/10 text-primary font-semibold shadow-xs"
+                  : "border-transparent text-muted-foreground hover:bg-accent/40 hover:text-foreground"
               )}
             >
               <Icon
                 className={cn(
                   "h-4.5 w-4.5 shrink-0 transition-colors",
-                  isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
+                  isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
                 )}
               />
               {!collapsed && <span>{item.label}</span>}

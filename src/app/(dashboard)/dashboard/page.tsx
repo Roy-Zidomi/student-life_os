@@ -17,6 +17,7 @@ import { getStudyStats } from "@/actions/study.actions";
 import { getEvents } from "@/actions/event.actions";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
+import { currentUser } from "@clerk/nextjs/server";
 
 const EVENT_TYPE_LABELS: Record<string, string> = {
   CLASS: "Kuliah",
@@ -53,24 +54,25 @@ function StatCard({
   accentClass: string;
 }) {
   return (
-    <Card className="border-border/50 bg-card/45 shadow-xs transition-all duration-300">
+    <Card className="border-border/40 bg-card/25 backdrop-blur-xs shadow-md transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 hover:border-primary/20 hover:-translate-y-0.5">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
+        <CardTitle className="text-sm font-semibold text-muted-foreground tracking-tight">
           {title}
         </CardTitle>
-        <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${accentClass}`}>
-          <Icon className="h-4 w-4" />
+        <div className={`flex h-9 w-9 items-center justify-center rounded-xl shadow-xs ${accentClass}`}>
+          <Icon className="h-4.5 w-4.5" />
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold tracking-tight">{value}</div>
-        <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
+      <CardContent className="pt-2">
+        <div className="text-2xl font-extrabold tracking-tight">{value}</div>
+        <p className="text-xs text-muted-foreground mt-1.5">{subtitle}</p>
       </CardContent>
     </Card>
   );
 }
 
 export default async function DashboardPage() {
+  const user = await currentUser();
   const [gpaStats, tasks, financeStats, studyStats, events] = await Promise.all([
     getGPAStats(),
     getTasks(),
@@ -152,8 +154,8 @@ export default async function DashboardPage() {
     <div className="space-y-8">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">
-          Selamat Datang! 👋
+        <h1 className="text-3xl font-extrabold tracking-tight">
+          Selamat Datang, <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">{user?.firstName || "Mahasiswa"}</span>! 👋
         </h1>
         <p className="text-muted-foreground mt-1">
           Berikut ringkasan aktivitasmu hari ini.
@@ -195,9 +197,9 @@ export default async function DashboardPage() {
       {/* Main Content Grid */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Today's Schedule */}
-        <Card className="border-border/50 bg-card/45">
+        <Card className="border-border/40 bg-card/25 backdrop-blur-xs shadow-md transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
+            <CardTitle className="flex items-center gap-2 text-lg font-bold">
               <CalendarDays className="h-5 w-5 text-primary" />
               Jadwal Hari Ini
             </CardTitle>
@@ -236,9 +238,9 @@ export default async function DashboardPage() {
         </Card>
 
         {/* Upcoming Deadlines */}
-        <Card className="border-border/50 bg-card/45">
+        <Card className="border-border/40 bg-card/25 backdrop-blur-xs shadow-md transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
+            <CardTitle className="flex items-center gap-2 text-lg font-bold">
               <ListTodo className="h-5 w-5 text-red-500/80" />
               Deadline Mendatang
             </CardTitle>
@@ -256,7 +258,7 @@ export default async function DashboardPage() {
                   let badgeText = "";
                   let badgeColor = "";
                   let dotColor = "";
-
+ 
                   if (item.type === "TASK") {
                     const priorityText = item.priority === "HIGH" ? "Tinggi" : item.priority === "MEDIUM" ? "Sedang" : "Rendah";
                     badgeText = `Tugas (${priorityText})`;
@@ -299,9 +301,9 @@ export default async function DashboardPage() {
         </Card>
 
         {/* Productivity Overview */}
-        <Card className="border-border/50 bg-card/45">
+        <Card className="border-border/40 bg-card/25 backdrop-blur-xs shadow-md transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
+            <CardTitle className="flex items-center gap-2 text-lg font-bold">
               <TrendingUp className="h-5 w-5 text-primary" />
               Ringkasan Produktivitas
             </CardTitle>
@@ -337,9 +339,9 @@ export default async function DashboardPage() {
         </Card>
 
         {/* IPK Summary */}
-        <Card className="border-border/50 bg-card/45">
+        <Card className="border-border/40 bg-card/25 backdrop-blur-xs shadow-md transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
+            <CardTitle className="flex items-center gap-2 text-lg font-bold">
               <GraduationCap className="h-5 w-5 text-primary" />
               Ringkasan Akademik
             </CardTitle>
@@ -347,29 +349,29 @@ export default async function DashboardPage() {
           <CardContent>
             <div className="flex items-center gap-6">
               <div className="flex flex-col items-center">
-                <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-primary/20 bg-primary/5">
+                <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-primary/20 bg-primary/5 shadow-xs">
                   <span className="text-2xl font-bold text-primary">
                     {gpaStats.cumulativeGPA.toFixed(2)}
                   </span>
                 </div>
-                <span className="text-xs text-muted-foreground mt-2">IPK Saat Ini</span>
+                <span className="text-xs text-muted-foreground mt-2 font-medium">IPK Saat Ini</span>
               </div>
               <div className="flex-1 space-y-3">
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-sm border-b border-border/40 pb-1">
                   <span className="text-muted-foreground">IPS Semester Ini</span>
-                  <span className="font-medium">{latestIPS.toFixed(2)}</span>
+                  <span className="font-semibold">{latestIPS.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-sm border-b border-border/40 pb-1">
                   <span className="text-muted-foreground">Total SKS</span>
-                  <span className="font-medium">{gpaStats.totalCredits} SKS</span>
+                  <span className="font-semibold">{gpaStats.totalCredits} SKS</span>
                 </div>
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-sm border-b border-border/40 pb-1">
                   <span className="text-muted-foreground">Semester</span>
-                  <span className="font-medium">{currentSemester}</span>
+                  <span className="font-semibold">{currentSemester}</span>
                 </div>
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-sm pb-1">
                   <span className="text-muted-foreground">Target IPK</span>
-                  <span className="font-medium text-emerald-600 dark:text-emerald-400 font-semibold">3.70</span>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">3.70</span>
                 </div>
               </div>
             </div>

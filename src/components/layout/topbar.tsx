@@ -103,7 +103,7 @@ export function Topbar() {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-border bg-card/80 backdrop-blur-xl px-4 md:px-6">
+    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-border/40 bg-card/60 backdrop-blur-md px-4 md:px-6">
       {/* Left - Page Title area */}
       <div className="flex items-center gap-4">
         <MobileNav />
@@ -127,8 +127,8 @@ export function Topbar() {
               </Button>
             }
           />
-          <PopoverContent className="w-80 p-0 sm:w-96 border border-border bg-popover text-popover-foreground shadow-lg rounded-xl overflow-hidden" align="end">
-            <div className="flex items-center justify-between border-b border-border p-4 bg-muted/40">
+          <PopoverContent className="w-80 p-0 sm:w-96 border border-border/40 bg-popover/90 backdrop-blur-md text-popover-foreground shadow-xl rounded-2xl overflow-hidden" align="end">
+            <div className="flex items-center justify-between border-b border-border/40 p-4 bg-muted/40">
               <div className="flex items-center gap-2">
                 <Bell className="h-4 w-4 text-foreground/80" />
                 <span className="font-semibold text-sm">Notifikasi</span>
