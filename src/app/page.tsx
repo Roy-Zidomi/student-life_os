@@ -45,10 +45,10 @@ export default async function LandingPage() {
         {/* Navbar */}
         <nav className="flex items-center justify-between px-6 py-4 md:px-12 bg-background/30 backdrop-blur-md border-b border-border/40 sticky top-0 z-50">
           <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/20">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary shadow-lg shadow-primary/20">
               <Sparkles className="h-4.5 w-4.5 text-white" />
             </div>
-            <span className="text-xl font-bold tracking-tight text-foreground bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/80">
+            <span className="text-xl font-extrabold tracking-widest text-white uppercase bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">
               StudentOS
             </span>
           </div>
@@ -88,7 +88,7 @@ export default async function LandingPage() {
 
           <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight leading-[1.1] text-foreground">
             Kelola Hidupmu Sebagai{" "}
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-500">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#0075FF] via-[#00F0FF] to-[#0075FF]">
               Mahasiswa
             </span>
             <br />
@@ -154,14 +154,16 @@ export default async function LandingPage() {
             {/* Window Content */}
             <div className="flex h-[420px] md:h-[460px] text-left">
               {/* Mock Sidebar */}
-              <div className="hidden sm:flex flex-col w-[60px] md:w-[180px] border-r border-border/40 bg-card/30 p-2 md:p-3 shrink-0">
+              <div className="hidden sm:flex flex-col w-[60px] md:w-[180px] border-r border-white/8 bg-[#060b26]/60 backdrop-blur-md p-2 md:p-3 shrink-0">
                 <div className="flex items-center gap-2 mb-6 px-1 md:px-2">
-                  <div className="h-6 w-6 rounded-md bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-                    <Sparkles className="h-3 w-3 text-white" />
+                  <div className="h-6 w-6 rounded-lg bg-primary flex items-center justify-center shadow-md shadow-primary/25">
+                    <Sparkles className="h-3.5 w-3.5 text-white" />
                   </div>
-                  <span className="hidden md:inline font-bold text-xs">StudentOS</span>
+                  <span className="hidden md:inline font-heading text-xs font-extrabold tracking-widest text-white uppercase bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">
+                    StudentOS
+                  </span>
                 </div>
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   {[
                     { icon: LayoutDashboard, label: "Dashboard", active: true },
                     { icon: CheckSquare, label: "Tugas" },
@@ -172,14 +174,20 @@ export default async function LandingPage() {
                   ].map((item, i) => (
                     <div
                       key={i}
-                      className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-medium cursor-pointer transition-colors ${
+                      className={`group flex items-center gap-2.5 rounded-xl px-2 py-1.5 text-xs font-medium transition-all duration-200 ${
                         item.active
-                          ? "bg-primary/10 text-primary"
-                          : "text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                          ? "bg-[#1a1f37]/70 text-white font-bold shadow-md"
+                          : "text-muted-foreground hover:bg-white/5 hover:text-white"
                       }`}
                     >
-                      <item.icon className="h-4 w-4 shrink-0" />
-                      <span className="hidden md:inline">{item.label}</span>
+                      <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg transition-all duration-300 ${
+                        item.active
+                          ? "bg-primary text-white shadow-md shadow-primary/30"
+                          : "bg-[#1a1f37] text-primary"
+                      }`}>
+                        <item.icon className="h-3.5 w-3.5" />
+                      </div>
+                      <span className="hidden md:inline text-[11px] font-semibold">{item.label}</span>
                     </div>
                   ))}
                 </div>
@@ -199,8 +207,8 @@ export default async function LandingPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   {/* Task / Pomodoro widget */}
-                  <div className="rounded-xl border border-border/40 bg-card/45 p-3 space-y-3">
-                    <div className="flex items-center justify-between border-b border-border/20 pb-2">
+                  <div className="rounded-xl border border-white/8 bg-[#060b26]/60 backdrop-blur-xl p-3 space-y-3">
+                    <div className="flex items-center justify-between border-b border-white/5 pb-2">
                       <span className="text-[10px] font-semibold text-muted-foreground">POMODORO TIMER</span>
                       <Timer className="h-3 w-3 text-orange-500" />
                     </div>
@@ -215,8 +223,8 @@ export default async function LandingPage() {
                   </div>
 
                   {/* Savings / Finance Widget */}
-                  <div className="rounded-xl border border-border/40 bg-card/45 p-3 space-y-2">
-                    <div className="flex items-center justify-between border-b border-border/20 pb-2">
+                  <div className="rounded-xl border border-white/8 bg-[#060b26]/60 backdrop-blur-xl p-3 space-y-2">
+                    <div className="flex items-center justify-between border-b border-white/5 pb-2">
                       <span className="text-[10px] font-semibold text-muted-foreground">WISHLIST / TABUNGAN</span>
                       <Wallet className="h-3 w-3 text-emerald-500" />
                     </div>
@@ -235,13 +243,13 @@ export default async function LandingPage() {
                   </div>
 
                   {/* GPA prediction Widget */}
-                  <div className="rounded-xl border border-border/40 bg-card/45 p-3 space-y-2">
-                    <div className="flex items-center justify-between border-b border-border/20 pb-2">
+                  <div className="rounded-xl border border-white/8 bg-[#060b26]/60 backdrop-blur-xl p-3 space-y-2">
+                    <div className="flex items-center justify-between border-b border-white/5 pb-2">
                       <span className="text-[10px] font-semibold text-muted-foreground">ESTIMASI IPK</span>
-                      <GraduationCap className="h-3 w-3 text-indigo-500" />
+                      <GraduationCap className="h-3 w-3 text-[#0075FF]" />
                     </div>
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full border-2 border-indigo-500 flex items-center justify-center text-xs font-bold text-indigo-500 bg-indigo-500/5">
+                      <div className="h-10 w-10 rounded-full border-2 border-[#0075FF] flex items-center justify-center text-xs font-bold text-[#0075FF] bg-[#0075FF]/5">
                         3.85
                       </div>
                       <div className="text-[9px] space-y-0.5">
@@ -253,8 +261,8 @@ export default async function LandingPage() {
                 </div>
 
                 {/* AI Assistant Chat Widget */}
-                <div className="rounded-xl border border-border/40 bg-card/45 p-3 space-y-2.5">
-                  <div className="flex items-center gap-1.5 border-b border-border/20 pb-2">
+                <div className="rounded-xl border border-white/8 bg-[#060b26]/60 backdrop-blur-xl p-3 space-y-2.5">
+                  <div className="flex items-center gap-1.5 border-b border-white/5 pb-2">
                     <Bot className="h-3.5 w-3.5 text-primary" />
                     <span className="text-[10px] font-semibold text-muted-foreground">AI ASSISTANT</span>
                   </div>
@@ -301,14 +309,14 @@ export default async function LandingPage() {
               {features.map((feature) => (
                 <div
                   key={feature.title}
-                  className="group relative overflow-hidden rounded-2xl border border-border/50 bg-card/25 p-6 backdrop-blur-xs transition-all duration-300 hover:bg-card/50 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1.5 glow-card"
+                  className="group relative overflow-hidden rounded-2xl border border-white/8 bg-[#060b26]/40 p-6 backdrop-blur-xs transition-all duration-300 hover:bg-[#060b26]/60 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1.5 glow-card"
                 >
                   <div
                     className={`mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br ${feature.color} shadow-lg shadow-black/10`}
                   >
                     <feature.icon className="h-5 w-5 text-white" />
                   </div>
-                  <h3 className="text-lg font-bold text-foreground">{feature.title}</h3>
+                  <h3 className="text-lg font-bold text-white">{feature.title}</h3>
                   <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
                     {feature.description}
                   </p>
@@ -334,14 +342,14 @@ export default async function LandingPage() {
             </div>
             <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3">
               {[
-                { name: "Andini Putri", role: "Mahasiswi Informatika UI", quote: "StudentOS membantu saya melacak tugas kuliah dan belajar dengan Pomodoro secara bersamaan. Sangat hemat waktu!", color: "from-blue-500/10 to-indigo-500/10 border-blue-500/20" },
-                { name: "Rian Hidayat", role: "Mahasiswa Akuntansi UNPAD", quote: "Fitur IPK Predictor dan Pelacak Keuangan sangat berguna. Sekarang saya bisa mengatur budget bulanan sekaligus target akademis.", color: "from-indigo-500/10 to-purple-500/10 border-indigo-500/20" },
-                { name: "Dina Amelia", role: "Mahasiswi Kedokteran UGM", quote: "Catatan markdown dan AI assistant-nya juara! Sangat membantu merangkum materi kuliah kedokteran yang super padat.", color: "from-purple-500/10 to-pink-500/10 border-purple-500/20" }
+                { name: "Andini Putri", role: "Mahasiswi Informatika UI", quote: "StudentOS membantu saya melacak tugas kuliah dan belajar dengan Pomodoro secara bersamaan. Sangat hemat waktu!", color: "from-[#0075FF]/10 to-[#00F0FF]/5 border-primary/20" },
+                { name: "Rian Hidayat", role: "Mahasiswa Akuntansi UNPAD", quote: "Fitur IPK Predictor dan Pelacak Keuangan sangat berguna. Sekarang saya bisa mengatur budget bulanan sekaligus target akademis.", color: "from-[#0075FF]/10 to-[#00F0FF]/5 border-primary/20" },
+                { name: "Dina Amelia", role: "Mahasiswi Kedokteran UGM", quote: "Catatan markdown dan AI assistant-nya juara! Sangat membantu merangkum materi kuliah kedokteran yang super padat.", color: "from-[#0075FF]/10 to-[#00F0FF]/5 border-primary/20" }
               ].map((t, idx) => (
                 <div key={idx} className={`relative overflow-hidden rounded-xl border p-6 bg-gradient-to-br ${t.color} backdrop-blur-sm`}>
-                  <p className="text-sm italic leading-relaxed text-foreground/80">&quot;{t.quote}&quot;</p>
+                  <p className="text-sm italic leading-relaxed text-white/80">&quot;{t.quote}&quot;</p>
                   <div className="mt-4">
-                    <h4 className="text-sm font-semibold">{t.name}</h4>
+                    <h4 className="text-sm font-semibold text-white">{t.name}</h4>
                     <p className="text-xs text-muted-foreground">{t.role}</p>
                   </div>
                 </div>
@@ -363,9 +371,9 @@ export default async function LandingPage() {
                 { q: "Bagaimana cara kerja AI Assistant?", a: "AI Assistant terhubung langsung dengan catatan, tugas, dan jadwal kuliah Anda untuk membantu merencanakan belajar, menjawab pertanyaan, dan memberikan insight akademis secara cerdas." },
                 { q: "Apakah data saya aman?", a: "Tentu saja. Kami menggunakan enkripsi kelas industri dan Clerk Authentication untuk memastikan data pribadi dan akademik Anda tetap aman dan terlindungi." }
               ].map((faq, idx) => (
-                <details key={idx} className="group border border-border/50 rounded-xl bg-card/20 p-4 transition-all duration-300 [&_summary::-webkit-details-marker]:hidden">
+                <details key={idx} className="group border border-white/8 rounded-xl bg-[#060b26]/40 p-4 transition-all duration-300 [&_summary::-webkit-details-marker]:hidden">
                   <summary className="flex items-center justify-between gap-1.5 cursor-pointer">
-                    <h3 className="font-semibold text-sm sm:text-base text-foreground">{faq.q}</h3>
+                    <h3 className="font-semibold text-sm sm:text-base text-white">{faq.q}</h3>
                     <span className="shrink-0 transition duration-300 group-open:-rotate-180">
                       <ArrowRight className="h-4 w-4 rotate-90 text-primary" />
                     </span>

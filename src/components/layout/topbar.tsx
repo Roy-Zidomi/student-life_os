@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { UserButton } from "@clerk/nextjs";
-import { ThemeToggle } from "./theme-toggle";
 import { 
   Bell, 
   CheckSquare, 
@@ -103,7 +102,7 @@ export function Topbar() {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between bg-transparent border-none px-4 md:px-6">
+    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between bg-transparent border-none px-4 md:px-6 lg:px-8">
       {/* Left - Page Title area */}
       <div className="flex items-center gap-4">
         <MobileNav />
@@ -112,8 +111,6 @@ export function Topbar() {
 
       {/* Right - Actions */}
       <div className="flex items-center gap-2">
-        <ThemeToggle />
-        
         <Popover open={isOpen} onOpenChange={setIsOpen}>
           <PopoverTrigger
             render={

@@ -31,7 +31,7 @@ export default function DashboardLayout({
         <Topbar />
 
         {/* Page Content */}
-        <main className="flex-1 p-4 md:p-6 lg:p-8 lg:pl-0">
+        <main className="flex-1 p-4 md:p-6 lg:p-8">
           {children}
         </main>
       </div>
