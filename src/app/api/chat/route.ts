@@ -14,7 +14,8 @@ const chatMessageSchema = z.object({
     .array(
       z.object({
         role: z.enum(["user", "assistant", "system"]),
-        content: z.string().max(10_000, "Pesan terlalu panjang"),
+        content: z.string().max(10_000, "Pesan terlalu panjang").optional(),
+        parts: z.array(z.any()).optional(),
       }).passthrough() // Allow additional fields from AI SDK UI format
     )
     .min(1, "Minimal 1 pesan")
