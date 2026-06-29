@@ -33,6 +33,21 @@ export async function createCourse(data: unknown) {
 
   const parsed = courseSchema.parse(data);
 
+  // Check for duplicate course name (case-insensitive)
+  const existingCourse = await prisma.course.findFirst({
+    where: {
+      userId: user.id,
+      name: {
+        equals: parsed.name,
+        mode: "insensitive",
+      },
+    },
+  });
+
+  if (existingCourse) {
+    return { success: false, error: "Mata kuliah dengan nama ini sudah terdaftar." };
+  }
+
   const gradePoint = parsed.grade ? GRADE_MAP[parsed.grade] ?? null : null;
 
   const course = await prisma.course.create({
@@ -68,6 +83,26 @@ export async function updateCourse(id: string, data: unknown) {
 
   if (!existing) {
     return { success: false, error: "Mata kuliah tidak ditemukan" };
+  }
+
+  // Check for duplicate name if name is changing
+  if (parsed.name && parsed.name.toLowerCase() !== existing.name.toLowerCase()) {
+    const duplicate = await prisma.course.findFirst({
+      where: {
+        userId: user.id,
+        name: {
+          equals: parsed.name,
+          mode: "insensitive",
+        },
+        id: {
+          not: validatedId,
+        },
+      },
+    });
+
+    if (duplicate) {
+      return { success: false, error: "Mata kuliah dengan nama ini sudah terdaftar." };
+    }
   }
 
   const updateData: Record<string, unknown> = { ...parsed };
@@ -260,6 +295,27 @@ export async function importCoursesAction(courses: { semester: number; name: str
 
     // Validate input with Zod
     const parsed = importCoursesSchema.parse(courses);
+    
+    // Check for duplicate course names (case-insensitive) compared to database
+    const existingCourses = await prisma.course.findMany({
+      where: { userId: user.id },
+      select: { name: true },
+    });
+    const existingNames = new Set(existingCourses.map((c) => c.name.toLowerCase()));
+
+    // Also check for duplicates within the imported list itself (case-insensitive)
+    const seenNames = new Set<string>();
+
+    for (const course of parsed) {
+      const lowerName = course.name.toLowerCase();
+      if (existingNames.has(lowerName)) {
+        return { success: false, error: `Mata kuliah "${course.name}" sudah terdaftar.` };
+      }
+      if (seenNames.has(lowerName)) {
+        return { success: false, error: `Mata kuliah "${course.name}" duplikat dalam data import.` };
+      }
+      seenNames.add(lowerName);
+    }
     
     const createdCourses = await prisma.$transaction(
       parsed.map((course) => {

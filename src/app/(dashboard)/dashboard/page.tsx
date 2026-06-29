@@ -21,6 +21,7 @@ import { getEvents } from "@/actions/event.actions";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import { currentUser } from "@clerk/nextjs/server";
+import { getCurrentUser } from "@/lib/user";
 
 const EVENT_TYPE_LABELS: Record<string, string> = {
   CLASS: "Kuliah",
@@ -76,6 +77,7 @@ function StatCard({
 
 export default async function DashboardPage() {
   const user = await currentUser();
+  const dbUser = await getCurrentUser();
   const [gpaStats, tasks, financeStats, studyStats, events] = await Promise.all([
     getGPAStats(),
     getTasks(),
@@ -175,7 +177,7 @@ export default async function DashboardPage() {
             <div className="space-y-2">
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Selamat Datang Kembali</span>
               <h2 className="text-3xl font-extrabold text-white tracking-tight">
-                {user?.firstName || "Mahasiswa"}
+                {dbUser?.name || user?.firstName || "Mahasiswa"}
               </h2>
               <p className="text-sm text-muted-foreground max-w-sm leading-relaxed mt-2">
                 Senang melihat Anda kembali! Ada tugas kuliah yang mendesak hari ini. Butuh bantuan merencanakannya?

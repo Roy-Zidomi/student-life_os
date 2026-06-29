@@ -16,12 +16,16 @@ export async function POST() {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    const existingUser = await prisma.user.findUnique({
+      where: { clerkId: userId },
+    });
+
     // Upsert user in database
     await prisma.user.upsert({
       where: { clerkId: userId },
       update: {
         email: clerkUser.emailAddresses[0]?.emailAddress || "",
-        name: `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim(),
+        name: existingUser?.name || `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim(),
         imageUrl: clerkUser.imageUrl,
       },
       create: {

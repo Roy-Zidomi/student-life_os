@@ -122,6 +122,16 @@ export default function GPAPageClient({
   const handleEditSubmit = () => {
     if (!selectedCourse) return;
     if (!editName.trim()) { toast.error("Nama mata kuliah wajib diisi"); return; }
+
+    // Client-side duplicate check
+    const isDuplicate = courses.some(
+      (c) => c.id !== selectedCourse.id && c.name.toLowerCase() === editName.trim().toLowerCase()
+    );
+    if (isDuplicate) {
+      toast.error("Mata kuliah dengan nama ini sudah terdaftar.");
+      return;
+    }
+
     startTransition(async () => {
       try {
         const result = await updateCourse(selectedCourse.id, {
@@ -135,6 +145,8 @@ export default function GPAPageClient({
           toast.success("Mata kuliah berhasil diperbarui");
           setEditDialogOpen(false);
           window.location.reload();
+        } else {
+          toast.error(result.error || "Gagal memperbarui mata kuliah");
         }
       } catch { toast.error("Gagal memperbarui mata kuliah"); }
     });
@@ -147,6 +159,16 @@ export default function GPAPageClient({
 
   const handleSubmit = () => {
     if (!name.trim()) { toast.error("Nama mata kuliah wajib diisi"); return; }
+
+    // Client-side duplicate check
+    const isDuplicate = courses.some(
+      (c) => c.name.toLowerCase() === name.trim().toLowerCase()
+    );
+    if (isDuplicate) {
+      toast.error("Mata kuliah dengan nama ini sudah terdaftar.");
+      return;
+    }
+
     startTransition(async () => {
       try {
         const result = await createCourse({
@@ -162,6 +184,8 @@ export default function GPAPageClient({
           resetForm();
           // Refresh stats
           window.location.reload();
+        } else {
+          toast.error(result.error || "Gagal menambahkan mata kuliah");
         }
       } catch { toast.error("Gagal menambahkan mata kuliah"); }
     });
