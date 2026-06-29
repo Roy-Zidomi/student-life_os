@@ -20,18 +20,21 @@ export async function POST() {
       where: { clerkId: userId },
     });
 
+    const clerkName = `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim();
+    const finalName = clerkName || existingUser?.name || clerkUser.emailAddresses[0]?.emailAddress.split("@")[0] || "User";
+
     // Upsert user in database
     await prisma.user.upsert({
       where: { clerkId: userId },
       update: {
         email: clerkUser.emailAddresses[0]?.emailAddress || "",
-        name: existingUser?.name || `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim(),
+        name: finalName,
         imageUrl: clerkUser.imageUrl,
       },
       create: {
         clerkId: userId,
         email: clerkUser.emailAddresses[0]?.emailAddress || "",
-        name: `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim(),
+        name: finalName,
         imageUrl: clerkUser.imageUrl,
       },
     });

@@ -177,7 +177,7 @@ export default async function DashboardPage() {
             <div className="space-y-2">
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Selamat Datang Kembali</span>
               <h2 className="text-3xl font-extrabold text-white tracking-tight">
-                {dbUser?.name || user?.firstName || "Mahasiswa"}
+                {user?.firstName || dbUser?.name || "Mahasiswa"}
               </h2>
               <p className="text-sm text-muted-foreground max-w-sm leading-relaxed mt-2">
                 Senang melihat Anda kembali! Ada tugas kuliah yang mendesak hari ini. Butuh bantuan merencanakannya?
