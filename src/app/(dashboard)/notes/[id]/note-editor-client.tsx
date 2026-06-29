@@ -72,7 +72,6 @@ export default function NoteEditorClient({ note }: { note: NoteData }) {
           value={content}
           onChange={(val) => { setContent(val || ""); setSaved(false); }}
           height={500}
-          preview="live"
         />
       </div>
     </div>

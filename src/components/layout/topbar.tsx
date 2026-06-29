@@ -124,7 +124,7 @@ export function Topbar() {
               </Button>
             }
           />
-          <PopoverContent className="w-80 p-0 sm:w-96 border border-border/40 bg-popover/90 backdrop-blur-md text-popover-foreground shadow-xl rounded-2xl overflow-hidden" align="end">
+          <PopoverContent className="w-[calc(100vw-32px)] sm:w-96 max-w-md p-0 border border-border/40 bg-popover/90 backdrop-blur-md text-popover-foreground shadow-xl rounded-2xl overflow-hidden" align="end">
             <div className="flex items-center justify-between border-b border-border/40 p-4 bg-muted/40">
               <div className="flex items-center gap-2">
                 <Bell className="h-4 w-4 text-foreground/80" />

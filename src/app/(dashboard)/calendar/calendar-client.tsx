@@ -252,7 +252,7 @@ export default function CalendarPageClient({ initialEvents }: { initialEvents: C
                 <button
                   key={i}
                   onClick={() => handleDayClick(date)}
-                  className={`relative min-h-[80px] rounded-lg border p-1.5 text-left transition-colors hover:bg-accent/50 ${
+                  className={`relative min-h-[52px] md:min-h-[80px] rounded-lg border p-1 md:p-1.5 text-left transition-colors hover:bg-accent/50 ${
                     !isSameMonth(date, currentDate)
                       ? "border-transparent text-muted-foreground/30"
                       : isToday(date)
@@ -263,7 +263,20 @@ export default function CalendarPageClient({ initialEvents }: { initialEvents: C
                   <span className={`text-xs font-medium ${isToday(date) ? "text-primary" : ""}`}>
                     {format(date, "d")}
                   </span>
-                  <div className="mt-1 space-y-0.5">
+                  
+                  {/* On Mobile: Render compact dots/colors */}
+                  <div className="mt-1 flex flex-wrap gap-0.5 justify-start md:hidden">
+                    {dayEvents.slice(0, 3).map((event) => (
+                      <span
+                        key={event.id}
+                        className="h-1.5 w-1.5 rounded-full shrink-0"
+                        style={{ backgroundColor: event.color || "#818cf8" }}
+                      />
+                    ))}
+                  </div>
+
+                  {/* On Desktop: Render event title text blocks */}
+                  <div className="mt-1 space-y-0.5 hidden md:block">
                     {dayEvents.slice(0, 2).map((event) => (
                       <div
                         key={event.id}

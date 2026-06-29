@@ -68,8 +68,8 @@ export default async function LandingPage() {
                   </Button>
                 </Link>
                 <Link href="/sign-up">
-                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-md text-sm h-9 px-4 rounded-lg font-medium transition-all">
-                    Daftar Gratis
+                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-md text-sm h-9 px-3 sm:px-4 rounded-lg font-medium transition-all">
+                    Daftar<span className="hidden sm:inline"> Gratis</span>
                     <ArrowRight className="ml-1.5 h-4 w-4" />
                   </Button>
                 </Link>

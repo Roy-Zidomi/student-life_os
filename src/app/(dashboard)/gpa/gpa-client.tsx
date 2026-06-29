@@ -454,9 +454,9 @@ export default function GPAPageClient({
             <CardTitle className="text-sm">IPS per Semester</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-end justify-center gap-8 h-28 max-w-2xl mx-auto">
+            <div className="flex items-end justify-start sm:justify-center gap-3 sm:gap-6 md:gap-8 h-28 max-w-full overflow-x-auto pb-1 scrollbar-thin">
               {stats.semesterGPA.map((s) => (
-                <div key={s.semester} className="flex flex-col items-center w-12">
+                <div key={s.semester} className="flex flex-col items-center w-10 sm:w-12 shrink-0">
                   <span className="text-xs font-bold mb-1">{s.gpa.toFixed(2)}</span>
                   <div
                     className="w-full rounded-t-md bg-primary transition-all shadow-md"
