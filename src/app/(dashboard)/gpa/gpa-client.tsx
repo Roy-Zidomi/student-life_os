@@ -454,15 +454,15 @@ export default function GPAPageClient({
             <CardTitle className="text-sm">IPS per Semester</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-end justify-start sm:justify-center gap-3 sm:gap-6 md:gap-8 h-28 max-w-full overflow-x-auto pb-1 scrollbar-thin">
+            <div className="flex items-end justify-center gap-2 sm:gap-6 md:gap-8 h-28 max-w-full">
               {stats.semesterGPA.map((s) => (
-                <div key={s.semester} className="flex flex-col items-center w-10 sm:w-12 shrink-0">
-                  <span className="text-xs font-bold mb-1">{s.gpa.toFixed(2)}</span>
+                <div key={s.semester} className="flex flex-col items-center flex-1 max-w-[48px] min-w-0">
+                  <span className="text-[10px] sm:text-xs font-bold mb-1">{s.gpa.toFixed(2)}</span>
                   <div
                     className="w-full rounded-t-md bg-primary transition-all shadow-md"
                     style={{ height: `${(s.gpa / 4) * 100}%` }}
                   />
-                  <span className="text-xs text-muted-foreground mt-2 font-medium">Sem {s.semester}</span>
+                  <span className="text-[10px] sm:text-xs text-muted-foreground mt-2 font-medium truncate w-full text-center">Sem {s.semester}</span>
                 </div>
               ))}
             </div>
@@ -503,8 +503,8 @@ export default function GPAPageClient({
           <CardContent className="space-y-2">
             {courses.filter((c) => c.semester === sem).map((course) => (
               <div key={course.id} className="flex items-center justify-between rounded-lg bg-accent/30 p-3 group hover:bg-accent/50">
-                <div>
-                  <p className="text-sm font-medium">{course.name}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium break-words pr-2">{course.name}</p>
                   <p className="text-xs text-muted-foreground">{course.credits} SKS</p>
                 </div>
                 <div className="flex items-center gap-2">

@@ -142,9 +142,14 @@ export default function WishlistPageClient({
               <p className="text-2xl font-bold text-indigo-400 mt-0.5">{formatRupiah(currentSavings)}</p>
             </div>
           </div>
-          <div className="text-xs text-muted-foreground sm:text-right">
+          <div className="text-xs text-muted-foreground sm:text-right flex flex-col sm:block gap-0.5 min-w-0">
             <p>Saldo Awal: {formatRupiah(initialSavingsData.initialBalance)}</p>
-            <p className="mt-0.5">Total Mutasi: +{formatRupiah(initialSavingsData.totalIncome)} | -{formatRupiah(initialSavingsData.totalExpense)}</p>
+            <p className="flex flex-wrap gap-1 sm:block">
+              <span>Total Mutasi:</span>
+              <span className="text-emerald-500 font-medium">+{formatRupiah(initialSavingsData.totalIncome)}</span>
+              <span className="hidden sm:inline"> | </span>
+              <span className="text-rose-500 font-medium">-{formatRupiah(initialSavingsData.totalExpense)}</span>
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -192,7 +197,7 @@ export default function WishlistPageClient({
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <CardTitle className="text-base line-clamp-1">{item.name}</CardTitle>
-                      <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
+                      <p className="text-[10px] text-muted-foreground mt-1 flex flex-wrap items-center gap-1 break-words">
                         <Calendar className="h-3 w-3" />
                         Target: {dateText} {daysRemainingText && `(${daysRemainingText})`}
                       </p>

@@ -43,24 +43,26 @@ function HabitHeatmap({ logs }: { logs: { date: Date; completed: boolean }[] }) 
   });
 
   return (
-    <div className="flex gap-[3px] overflow-x-auto py-2">
-      {weeks.map((week, wi) => (
-        <div key={wi} className="flex flex-col gap-[3px]">
-          {week.map((day) => {
-            const dateStr = format(day, "yyyy-MM-dd");
-            const hasLog = logDates.has(dateStr);
-            return (
-              <div
-                key={dateStr}
-                className={`h-3 w-3 rounded-sm transition-colors ${
-                  hasLog ? "bg-emerald-500" : "bg-accent/50"
-                }`}
-                title={`${format(day, "dd MMM yyyy", { locale: localeId })}${hasLog ? " ✅" : ""}`}
-              />
-            );
-          })}
-        </div>
-      ))}
+    <div className="w-full overflow-x-auto scrollbar-thin">
+      <div className="flex gap-[3px] min-w-max py-2">
+        {weeks.map((week, wi) => (
+          <div key={wi} className="flex flex-col gap-[3px] shrink-0">
+            {week.map((day) => {
+              const dateStr = format(day, "yyyy-MM-dd");
+              const hasLog = logDates.has(dateStr);
+              return (
+                <div
+                  key={dateStr}
+                  className={`h-3 w-3 rounded-sm transition-colors shrink-0 ${
+                    hasLog ? "bg-emerald-500" : "bg-accent/50"
+                  }`}
+                  title={`${format(day, "dd MMM yyyy", { locale: localeId })}${hasLog ? " ✅" : ""}`}
+                />
+              );
+            })}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -189,7 +191,7 @@ export default function HabitsPageClient({ initialHabits }: { initialHabits: Hab
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Card className="border-border/50 bg-card/50">
           <CardContent className="p-4 flex items-center gap-3">
             <Target className="h-5 w-5 text-foreground/70" />
@@ -261,7 +263,7 @@ export default function HabitsPageClient({ initialHabits }: { initialHabits: Hab
 
       {/* Heatmaps */}
       {habits.map((habit) => (
-        <Card key={habit.id} className="border-border/50 bg-card/50">
+        <Card key={habit.id} className="border-border/50 bg-card/50 overflow-hidden w-full min-w-0">
           <CardHeader>
             <CardTitle className="text-sm flex items-center gap-2">
               <span>{habit.icon}</span> {habit.name}

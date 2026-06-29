@@ -75,7 +75,7 @@ export default function AIAssistantPage() {
                   <button
                     key={prompt}
                     onClick={() => handleSuggestClick(prompt)}
-                    className="text-left rounded-lg border border-border/50 bg-accent/30 p-3 text-sm hover:bg-indigo-500/10 hover:border-indigo-500/30 transition-all hover:-translate-y-0.5"
+                    className="text-left rounded-lg border border-border/50 bg-accent/30 p-3 text-sm hover:bg-indigo-500/10 hover:border-indigo-500/30 transition-all hover:-translate-y-0.5 whitespace-normal break-words"
                   >
                     {prompt}
                   </button>
@@ -91,7 +91,7 @@ export default function AIAssistantPage() {
                       <Bot className="h-4 w-4 text-white" />
                     </div>
                   )}
-                  <div className={`rounded-xl px-4 py-3 max-w-[80%] text-sm leading-relaxed ${
+                  <div className={`rounded-xl px-4 py-3 max-w-[80%] text-sm leading-relaxed break-words ${
                     m.role === "user"
                       ? "bg-indigo-500 text-white shadow-md shadow-indigo-500/10"
                       : "bg-accent/50 border border-border/20"
