@@ -1,6 +1,6 @@
 import { addDays, endOfDay, format, startOfDay, startOfMonth, endOfMonth } from "date-fns";
 import { id as localeId } from "date-fns/locale";
-import type { TransactionCategory } from "@prisma/client";
+import type { EventType, TransactionCategory } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { GRADE_MAP } from "@/lib/constants";
 
@@ -45,6 +45,10 @@ type TelegramSessionData = {
   description?: string;
   transactionType?: "INCOME" | "EXPENSE";
   subject?: string;
+  eventTitle?: string;
+  eventStartDate?: string;
+  eventDurationMinutes?: number;
+  eventType?: EventType;
 };
 
 type SessionState =
@@ -57,7 +61,12 @@ type SessionState =
   | "ADD_INCOME_CATEGORY"
   | "ADD_TASK_TITLE"
   | "ADD_STUDY_SUBJECT"
-  | "ADD_STUDY_DURATION";
+  | "ADD_STUDY_DURATION"
+  | "ADD_EVENT_TITLE"
+  | "ADD_EVENT_START"
+  | "ADD_EVENT_DURATION"
+  | "ADD_EVENT_TYPE"
+  | "ADD_EVENT_LOCATION";
 
 const EXPENSE_CATEGORIES = [
   ["FOOD", "Makanan"],
@@ -80,6 +89,14 @@ const ALL_TRANSACTION_CATEGORIES = [
   ...EXPENSE_CATEGORIES.map(([value]) => value),
   ...INCOME_CATEGORIES.map(([value]) => value),
 ] as TransactionCategory[];
+
+const EVENT_TYPES = [
+  ["CLASS", "Kuliah"],
+  ["EXAM", "Ujian"],
+  ["PRESENTATION", "Presentasi"],
+  ["MEETING", "Rapat"],
+  ["OTHER", "Lainnya"],
+] as const satisfies ReadonlyArray<readonly [EventType, string]>;
 
 function getBotToken() {
   const token = process.env.TELEGRAM_BOT_TOKEN;
@@ -146,13 +163,37 @@ function mainMenuKeyboard(): InlineKeyboardMarkup {
         { text: "Tugas", callback_data: "menu:tasks" },
       ],
       [
+        { text: "Kalender", callback_data: "menu:calendar" },
         { text: "Keuangan", callback_data: "menu:finance" },
-        { text: "Habit", callback_data: "menu:habits" },
       ],
       [
+        { text: "Habit", callback_data: "menu:habits" },
         { text: "Belajar", callback_data: "menu:study" },
+      ],
+      [
         { text: "IPK", callback_data: "menu:gpa" },
       ],
+    ],
+  };
+}
+
+function calendarKeyboard(): InlineKeyboardMarkup {
+  return {
+    inline_keyboard: [
+      [{ text: "+ Jadwal Baru", callback_data: "calendar:add" }],
+      [
+        { text: "Hari Ini", callback_data: "menu:today" },
+        { text: "Menu Utama", callback_data: "menu:main" },
+      ],
+    ],
+  };
+}
+
+function eventTypeKeyboard(): InlineKeyboardMarkup {
+  return {
+    inline_keyboard: [
+      ...EVENT_TYPES.map(([value, label]) => [{ text: label, callback_data: `calendar:type:${value}` }]),
+      [{ text: "Batal", callback_data: "flow:cancel" }],
     ],
   };
 }
@@ -194,6 +235,74 @@ function parseAmount(text: string) {
   const amount = Number(normalized);
   if (!Number.isFinite(amount) || amount < 1 || amount > 999_999_999_999) return null;
   return amount;
+}
+
+function parseJakartaDateTime(text: string): Date | null {
+  const value = text.trim().toLowerCase();
+  const timeOnlyMatch = value.match(/^(hari ini|besok)\s+(\d{1,2})[:.](\d{2})$/);
+
+  if (timeOnlyMatch) {
+    const base = new Date();
+    if (timeOnlyMatch[1] === "besok") {
+      base.setDate(base.getDate() + 1);
+    }
+    const year = base.getFullYear();
+    const month = base.getMonth() + 1;
+    const day = base.getDate();
+    const hour = Number(timeOnlyMatch[2]);
+    const minute = Number(timeOnlyMatch[3]);
+    return buildJakartaDate(year, month, day, hour, minute);
+  }
+
+  const isoLikeMatch = value.match(/^(\d{4})-(\d{1,2})-(\d{1,2})\s+(\d{1,2})[:.](\d{2})$/);
+  if (isoLikeMatch) {
+    return buildJakartaDate(
+      Number(isoLikeMatch[1]),
+      Number(isoLikeMatch[2]),
+      Number(isoLikeMatch[3]),
+      Number(isoLikeMatch[4]),
+      Number(isoLikeMatch[5])
+    );
+  }
+
+  const indonesianMatch = value.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})\s+(\d{1,2})[:.](\d{2})$/);
+  if (indonesianMatch) {
+    return buildJakartaDate(
+      Number(indonesianMatch[3]),
+      Number(indonesianMatch[2]),
+      Number(indonesianMatch[1]),
+      Number(indonesianMatch[4]),
+      Number(indonesianMatch[5])
+    );
+  }
+
+  return null;
+}
+
+function buildJakartaDate(year: number, month: number, day: number, hour: number, minute: number) {
+  if (
+    !Number.isInteger(year) ||
+    !Number.isInteger(month) ||
+    !Number.isInteger(day) ||
+    !Number.isInteger(hour) ||
+    !Number.isInteger(minute) ||
+    month < 1 ||
+    month > 12 ||
+    day < 1 ||
+    day > 31 ||
+    hour < 0 ||
+    hour > 23 ||
+    minute < 0 ||
+    minute > 59
+  ) {
+    return null;
+  }
+
+  return new Date(Date.UTC(year, month - 1, day, hour - 7, minute));
+}
+
+function parseEventType(value: string): EventType | null {
+  return EVENT_TYPES.some(([type]) => type === value) ? (value as EventType) : null;
 }
 
 function parseTransactionCategory(value: string): TransactionCategory | null {
@@ -312,10 +421,11 @@ async function sendMainMenu(chatId: string, name?: string | null) {
       "Pilih menu cepat di bawah ini, atau ketik:",
       "1. Hari Ini",
       "2. Tugas",
-      "3. Keuangan",
-      "4. Habit",
-      "5. Belajar",
-      "6. IPK",
+      "3. Kalender",
+      "4. Keuangan",
+      "5. Habit",
+      "6. Belajar",
+      "7. IPK",
     ].join("\n"),
     mainMenuKeyboard()
   );
@@ -515,6 +625,33 @@ async function sendHabits(chatId: string, userId: string) {
   });
 }
 
+async function sendCalendar(chatId: string, userId: string) {
+  const events = await prisma.event.findMany({
+    where: {
+      userId,
+      startDate: { gte: new Date() },
+    },
+    orderBy: { startDate: "asc" },
+    take: 10,
+  });
+
+  const lines = [
+    "<b>Kalender</b>",
+    "",
+    ...(events.length
+      ? events.map((event, index) => {
+          const start = format(event.startDate, "dd MMM yyyy HH:mm", { locale: localeId });
+          const location = event.location ? ` - ${escapeHtml(event.location)}` : "";
+          return `${index + 1}. ${escapeHtml(event.title)} (${start})${location}`;
+        })
+      : ["Belum ada jadwal mendatang."]),
+    "",
+    "Anda bisa tambah jadwal baru langsung dari bot.",
+  ];
+
+  await sendMessage(chatId, lines.join("\n"), calendarKeyboard());
+}
+
 async function sendStudy(chatId: string, userId: string) {
   const now = new Date();
   const sessions = await prisma.studySession.findMany({
@@ -669,6 +806,109 @@ async function handleStudySession(chatId: string, telegramUserId: string, userId
   }
 }
 
+async function handleEventSession(
+  chatId: string,
+  telegramUserId: string,
+  userId: string,
+  state: SessionState,
+  data: TelegramSessionData,
+  text: string
+) {
+  if (state === "ADD_EVENT_TITLE") {
+    const eventTitle = text.trim().slice(0, 200);
+    if (!eventTitle) {
+      await sendMessage(chatId, "Judul jadwal tidak boleh kosong.", cancelKeyboard());
+      return;
+    }
+
+    await setSession(telegramUserId, chatId, "ADD_EVENT_START", { ...data, eventTitle });
+    await sendMessage(
+      chatId,
+      [
+        "Kapan jadwalnya mulai?",
+        "",
+        "Format yang bisa dipakai:",
+        "<code>besok 09:00</code>",
+        "<code>hari ini 14:30</code>",
+        "<code>10-07-2026 09:00</code>",
+        "<code>2026-07-10 09:00</code>",
+      ].join("\n"),
+      cancelKeyboard()
+    );
+    return;
+  }
+
+  if (state === "ADD_EVENT_START") {
+    const startDate = parseJakartaDateTime(text);
+    if (!startDate) {
+      await sendMessage(chatId, "Format waktu belum valid. Contoh: <code>besok 09:00</code>", cancelKeyboard());
+      return;
+    }
+
+    await setSession(telegramUserId, chatId, "ADD_EVENT_DURATION", {
+      ...data,
+      eventStartDate: startDate.toISOString(),
+    });
+    await sendMessage(chatId, "Berapa menit durasinya? Contoh: 60", cancelKeyboard());
+    return;
+  }
+
+  if (state === "ADD_EVENT_DURATION") {
+    const duration = Number(text.replace(/[^\d]/g, ""));
+    if (!Number.isInteger(duration) || duration < 1 || duration > 1440) {
+      await sendMessage(chatId, "Durasi tidak valid. Isi 1 sampai 1440 menit.", cancelKeyboard());
+      return;
+    }
+
+    await setSession(telegramUserId, chatId, "ADD_EVENT_TYPE", {
+      ...data,
+      eventDurationMinutes: duration,
+    });
+    await sendMessage(chatId, "Pilih tipe jadwal:", eventTypeKeyboard());
+    return;
+  }
+
+  if (state === "ADD_EVENT_LOCATION") {
+    if (!data.eventTitle || !data.eventStartDate || !data.eventDurationMinutes || !data.eventType) {
+      await clearSession(telegramUserId, chatId);
+      await sendMessage(chatId, "Sesi tambah jadwal kedaluwarsa. Silakan ulangi.", calendarKeyboard());
+      return;
+    }
+
+    const location = text.trim().toLowerCase() === "skip" || text.trim() === "-"
+      ? null
+      : text.trim().slice(0, 200);
+    const startDate = new Date(data.eventStartDate);
+    const endDate = new Date(startDate.getTime() + data.eventDurationMinutes * 60 * 1000);
+
+    await prisma.event.create({
+      data: {
+        userId,
+        title: data.eventTitle,
+        startDate,
+        endDate,
+        type: data.eventType,
+        location: location || null,
+        color: "#818cf8",
+      },
+    });
+
+    await clearSession(telegramUserId, chatId);
+    await sendMessage(
+      chatId,
+      [
+        "Jadwal baru tersimpan.",
+        "",
+        `<b>${escapeHtml(data.eventTitle)}</b>`,
+        `Mulai: ${format(startDate, "dd MMM yyyy HH:mm", { locale: localeId })}`,
+        `Durasi: ${data.eventDurationMinutes} menit`,
+        location ? `Lokasi: ${escapeHtml(location)}` : "Lokasi: -",
+      ].join("\n"),
+      calendarKeyboard()
+    );
+  }
+}
+
 async function handleTaskSession(chatId: string, telegramUserId: string, userId: string, text: string) {
   const title = text.trim().slice(0, 200);
   if (!title) {
@@ -716,6 +956,21 @@ async function handleSessionText(chatId: string, telegramUserId: string, userId:
     return true;
   }
 
+  if (
+    state === "ADD_EVENT_TITLE" ||
+    state === "ADD_EVENT_START" ||
+    state === "ADD_EVENT_DURATION" ||
+    state === "ADD_EVENT_TYPE" ||
+    state === "ADD_EVENT_LOCATION"
+  ) {
+    if (state === "ADD_EVENT_TYPE") {
+      await sendMessage(chatId, "Pilih tipe jadwal lewat tombol di bawah ini.", eventTypeKeyboard());
+      return true;
+    }
+    await handleEventSession(chatId, telegramUserId, userId, state, data, text);
+    return true;
+  }
+
   if (state === "ADD_TASK_TITLE") {
     await handleTaskSession(chatId, telegramUserId, userId, text);
     return true;
@@ -750,19 +1005,23 @@ async function handleLinkedText(chatId: string, telegramUser: TelegramUser, text
     await sendTasks(chatId, account.userId);
     return;
   }
-  if (normalized === "3" || normalized.includes("uang") || normalized.includes("keuangan")) {
+  if (normalized === "3" || normalized.includes("kalender") || normalized.includes("jadwal")) {
+    await sendCalendar(chatId, account.userId);
+    return;
+  }
+  if (normalized === "4" || normalized.includes("uang") || normalized.includes("keuangan")) {
     await sendFinance(chatId, account.userId);
     return;
   }
-  if (normalized === "4" || normalized.includes("habit") || normalized.includes("kebiasaan")) {
+  if (normalized === "5" || normalized.includes("habit") || normalized.includes("kebiasaan")) {
     await sendHabits(chatId, account.userId);
     return;
   }
-  if (normalized === "5" || normalized.includes("belajar")) {
+  if (normalized === "6" || normalized.includes("belajar")) {
     await sendStudy(chatId, account.userId);
     return;
   }
-  if (normalized === "6" || normalized.includes("ipk") || normalized.includes("gpa")) {
+  if (normalized === "7" || normalized.includes("ipk") || normalized.includes("gpa")) {
     await sendGpa(chatId, account.userId);
     return;
   }
@@ -828,6 +1087,10 @@ async function handleCallback(callback: TelegramCallbackQuery) {
     await sendTasks(chatId, account.userId);
     return;
   }
+  if (data === "menu:calendar") {
+    await sendCalendar(chatId, account.userId);
+    return;
+  }
   if (data === "menu:finance") {
     await sendFinance(chatId, account.userId);
     return;
@@ -848,6 +1111,35 @@ async function handleCallback(callback: TelegramCallbackQuery) {
   if (data === "tasks:add") {
     await setSession(telegramUserId, chatId, "ADD_TASK_TITLE");
     await sendMessage(chatId, "Tulis judul tugas baru:", cancelKeyboard());
+    return;
+  }
+
+  if (data === "calendar:add") {
+    await setSession(telegramUserId, chatId, "ADD_EVENT_TITLE");
+    await sendMessage(chatId, "Tulis judul jadwal baru:", cancelKeyboard());
+    return;
+  }
+
+  if (data.startsWith("calendar:type:")) {
+    const eventType = parseEventType(data.replace("calendar:type:", ""));
+    const session = await getSession(telegramUserId);
+    const sessionData = (session?.data ?? {}) as TelegramSessionData;
+
+    if (!eventType || !sessionData.eventTitle || !sessionData.eventStartDate || !sessionData.eventDurationMinutes) {
+      await clearSession(telegramUserId, chatId);
+      await sendMessage(chatId, "Sesi tambah jadwal kedaluwarsa. Silakan ulangi.", calendarKeyboard());
+      return;
+    }
+
+    await setSession(telegramUserId, chatId, "ADD_EVENT_LOCATION", {
+      ...sessionData,
+      eventType,
+    });
+    await sendMessage(
+      chatId,
+      "Lokasinya di mana? Ketik <code>skip</code> kalau tidak perlu.",
+      cancelKeyboard()
+    );
     return;
   }
 
