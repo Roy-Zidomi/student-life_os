@@ -19,6 +19,7 @@ import {
   ChevronRight,
   Sparkles,
   Heart,
+  Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -35,6 +36,7 @@ const iconMap: Record<string, React.ElementType> = {
   BarChart3,
   Bot,
   Heart,
+  Settings,
 };
 
 interface SidebarProps {

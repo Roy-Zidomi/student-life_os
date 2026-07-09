@@ -75,4 +75,5 @@ export const NAV_ITEMS = [
   { href: "/gpa", label: "IPK", icon: "GraduationCap" },
   { href: "/analytics", label: "Analitik", icon: "BarChart3" },
   { href: "/ai-assistant", label: "AI Assistant", icon: "Bot" },
+  { href: "/settings", label: "Pengaturan", icon: "Settings" },
 ] as const;
