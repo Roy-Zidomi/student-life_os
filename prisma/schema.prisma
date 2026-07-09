@@ -34,6 +34,7 @@ model User {
   debts         Debt[]
   telegramAccount TelegramAccount?
   telegramLinkCodes TelegramLinkCode[]
+  calendarFeedToken CalendarFeedToken?
 
   @@index([clerkId])
 }
@@ -92,6 +93,7 @@ model Event {
   color       String?   @default("#6366f1")
   userId      String
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reminderLogs EventReminderLog[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -298,4 +300,30 @@ model TelegramBotSession {
 
   @@index([chatId])
   @@index([updatedAt])
+}
+
+// ==========================================
+// CALENDAR REMINDERS & PHONE CALENDAR FEED
+// ==========================================
+model EventReminderLog {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  channel   String
+  type      String
+  sentAt    DateTime @default(now())
+
+  @@unique([eventId, channel, type])
+  @@index([sentAt])
+}
+
+model CalendarFeedToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([token])
 }

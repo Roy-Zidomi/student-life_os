@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { ensureUser } from "@/lib/user";
 import { revalidatePath } from "next/cache";
 import { clerkClient } from "@clerk/nextjs/server";
-import { randomInt } from "crypto";
+import { randomBytes, randomInt } from "crypto";
 
 export async function updateUserProfile(name: string) {
   try {
@@ -45,7 +45,7 @@ export async function getTelegramLinkStatus() {
   const user = await ensureUser();
   const now = new Date();
 
-  const [account, activeCode] = await Promise.all([
+  const [account, activeCode, calendarFeed] = await Promise.all([
     prisma.telegramAccount.findUnique({
       where: { userId: user.id },
       select: {
@@ -67,6 +67,13 @@ export async function getTelegramLinkStatus() {
         expiresAt: true,
       },
     }),
+    prisma.calendarFeedToken.findUnique({
+      where: { userId: user.id },
+      select: {
+        token: true,
+        createdAt: true,
+      },
+    }),
   ]);
 
   return {
@@ -82,6 +89,12 @@ export async function getTelegramLinkStatus() {
       ? {
           code: activeCode.code,
           expiresAt: activeCode.expiresAt.toISOString(),
+        }
+      : null,
+    calendarFeed: calendarFeed
+      ? {
+          token: calendarFeed.token,
+          createdAt: calendarFeed.createdAt.toISOString(),
         }
       : null,
   };
@@ -139,6 +152,48 @@ export async function disconnectTelegramAccount() {
   await prisma.telegramLinkCode.updateMany({
     where: { userId: user.id, usedAt: null },
     data: { usedAt: new Date() },
+  });
+
+  revalidatePath("/settings");
+  return { success: true };
+}
+
+function generateCalendarFeedToken() {
+  return randomBytes(32).toString("base64url");
+}
+
+export async function createOrRotateCalendarFeedToken() {
+  const user = await ensureUser();
+  const token = generateCalendarFeedToken();
+
+  const calendarFeed = await prisma.calendarFeedToken.upsert({
+    where: { userId: user.id },
+    update: { token },
+    create: {
+      userId: user.id,
+      token,
+    },
+    select: {
+      token: true,
+      createdAt: true,
+    },
+  });
+
+  revalidatePath("/settings");
+  return {
+    success: true,
+    data: {
+      token: calendarFeed.token,
+      createdAt: calendarFeed.createdAt.toISOString(),
+    },
+  };
+}
+
+export async function deleteCalendarFeedToken() {
+  const user = await ensureUser();
+
+  await prisma.calendarFeedToken.deleteMany({
+    where: { userId: user.id },
   });
 
   revalidatePath("/settings");

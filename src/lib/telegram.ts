@@ -112,6 +112,10 @@ async function sendMessage(chatId: string, text: string, replyMarkup?: InlineKey
   });
 }
 
+export async function sendTelegramMessage(chatId: string, text: string, replyMarkup?: InlineKeyboardMarkup) {
+  await sendMessage(chatId, text, replyMarkup);
+}
+
 async function answerCallbackQuery(callbackQueryId: string) {
   await telegramApi("answerCallbackQuery", {
     callback_query_id: callbackQueryId,

@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Copy, Loader2, Save, Send, Settings, Unlink, User } from "lucide-react";
+import { Calendar, Copy, Loader2, RefreshCw, Save, Send, Settings, Trash2, Unlink, User } from "lucide-react";
 import {
+  createOrRotateCalendarFeedToken,
   createTelegramLinkCode,
+  deleteCalendarFeedToken,
   disconnectTelegramAccount,
   updateUserProfile,
 } from "@/actions/user.actions";
@@ -30,6 +32,10 @@ interface TelegramStatusData {
     code: string;
     expiresAt: string;
   } | null;
+  calendarFeed: {
+    token: string;
+    createdAt: string;
+  } | null;
 }
 
 export function SettingsClient({
@@ -42,7 +48,8 @@ export function SettingsClient({
   const [name, setName] = useState(initialUser?.name || "");
   const [isPending, startTransition] = useTransition();
   const [isTelegramPending, startTelegramTransition] = useTransition();
-  const [activeTab, setActiveTab] = useState<"profile" | "telegram" | "account">("profile");
+  const [isCalendarPending, startCalendarTransition] = useTransition();
+  const [activeTab, setActiveTab] = useState<"profile" | "telegram" | "calendar" | "account">("profile");
   const [telegramStatus, setTelegramStatus] = useState<TelegramStatusData>(initialTelegramStatus);
 
   const handleSave = () => {
@@ -89,7 +96,7 @@ export function SettingsClient({
       try {
         const result = await disconnectTelegramAccount();
         if (result.success) {
-          setTelegramStatus({ account: null, activeCode: null });
+          setTelegramStatus((current) => ({ ...current, account: null, activeCode: null }));
           toast.success("Telegram berhasil diputuskan.");
         } else {
           toast.error("Gagal memutuskan Telegram.");
@@ -108,6 +115,61 @@ export function SettingsClient({
       toast.success("Command link disalin.");
     } catch {
       toast.error("Gagal menyalin command.");
+    }
+  };
+
+  const getCalendarFeedUrl = () => {
+    if (!telegramStatus.calendarFeed) return "";
+    if (typeof window === "undefined") return "";
+    return `${window.location.origin}/api/calendar/${telegramStatus.calendarFeed.token}`;
+  };
+
+  const handleCreateOrRotateCalendarFeed = () => {
+    startCalendarTransition(async () => {
+      try {
+        const result = await createOrRotateCalendarFeedToken();
+        if (result.success && result.data) {
+          setTelegramStatus((current) => ({
+            ...current,
+            calendarFeed: result.data,
+          }));
+          toast.success("Link kalender berhasil dibuat.");
+        } else {
+          toast.error("Gagal membuat link kalender.");
+        }
+      } catch {
+        toast.error("Terjadi kesalahan saat membuat link kalender.");
+      }
+    });
+  };
+
+  const handleDeleteCalendarFeed = () => {
+    startCalendarTransition(async () => {
+      try {
+        const result = await deleteCalendarFeedToken();
+        if (result.success) {
+          setTelegramStatus((current) => ({
+            ...current,
+            calendarFeed: null,
+          }));
+          toast.success("Link kalender berhasil dimatikan.");
+        } else {
+          toast.error("Gagal mematikan link kalender.");
+        }
+      } catch {
+        toast.error("Terjadi kesalahan saat mematikan link kalender.");
+      }
+    });
+  };
+
+  const copyCalendarFeedUrl = async () => {
+    const url = getCalendarFeedUrl();
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Link kalender disalin.");
+    } catch {
+      toast.error("Gagal menyalin link kalender.");
     }
   };
 
@@ -151,6 +213,16 @@ export function SettingsClient({
           }`}
         >
           Telegram Bot
+        </button>
+        <button
+          onClick={() => setActiveTab("calendar")}
+          className={`pb-2 text-xs font-bold uppercase tracking-wider transition-all border-b-2 ${
+            activeTab === "calendar"
+              ? "border-primary text-white"
+              : "border-transparent text-muted-foreground hover:text-white"
+          }`}
+        >
+          Kalender HP
         </button>
         <button
           onClick={() => setActiveTab("account")}
@@ -325,6 +397,94 @@ export function SettingsClient({
                       timeStyle: "short",
                     }).format(new Date(telegramStatus.activeCode.expiresAt))}
                   </p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      ) : activeTab === "calendar" ? (
+        <Card className="border-white/8 bg-[#060b26]/60 backdrop-blur-xl shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-sm font-bold text-white flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-primary" />
+              Kalender HP
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="rounded-xl border border-white/8 bg-white/5 p-4">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Link Subscribe Calendar
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                Gunakan link ini untuk subscribe jadwal Student Life OS di Google Calendar,
+                Apple Calendar, atau aplikasi kalender lain yang mendukung iCalendar.
+                Event berisi alarm bawaan 1 hari dan 1 jam sebelum jadwal.
+              </p>
+
+              {telegramStatus.calendarFeed ? (
+                <div className="mt-4 space-y-3">
+                  <div className="break-all rounded-lg border border-white/8 bg-[#020617] px-3 py-2 font-mono text-xs text-white">
+                    {getCalendarFeedUrl()}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">
+                    Dibuat:{" "}
+                    {new Intl.DateTimeFormat("id-ID", {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    }).format(new Date(telegramStatus.calendarFeed.createdAt))}
+                  </p>
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <Button
+                      variant="outline"
+                      onClick={copyCalendarFeedUrl}
+                      className="h-9 rounded-xl text-xs"
+                    >
+                      <Copy className="mr-1.5 h-3.5 w-3.5" />
+                      Salin Link
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={handleCreateOrRotateCalendarFeed}
+                      disabled={isCalendarPending}
+                      className="h-9 rounded-xl text-xs"
+                    >
+                      {isCalendarPending ? (
+                        <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+                      )}
+                      Reset Link
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={handleDeleteCalendarFeed}
+                      disabled={isCalendarPending}
+                      className="h-9 rounded-xl text-xs"
+                    >
+                      <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                      Matikan Link
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-4">
+                  <Button
+                    onClick={handleCreateOrRotateCalendarFeed}
+                    disabled={isCalendarPending}
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs px-5 py-2.5 rounded-xl font-bold"
+                  >
+                    {isCalendarPending ? (
+                      <>
+                        <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                        Membuat Link...
+                      </>
+                    ) : (
+                      <>
+                        <Calendar className="mr-1.5 h-3.5 w-3.5" />
+                        Buat Link Kalender
+                      </>
+                    )}
+                  </Button>
                 </div>
               )}
             </div>
