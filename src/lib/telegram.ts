@@ -45,6 +45,9 @@ type TelegramSessionData = {
   description?: string;
   transactionType?: "INCOME" | "EXPENSE";
   subject?: string;
+  courseName?: string;
+  courseCredits?: number;
+  courseSemester?: number;
   eventTitle?: string;
   eventStartDate?: string;
   eventDurationMinutes?: number;
@@ -62,6 +65,11 @@ type SessionState =
   | "ADD_TASK_TITLE"
   | "ADD_STUDY_SUBJECT"
   | "ADD_STUDY_DURATION"
+  | "ADD_HABIT_NAME"
+  | "ADD_COURSE_NAME"
+  | "ADD_COURSE_CREDITS"
+  | "ADD_COURSE_SEMESTER"
+  | "ADD_COURSE_GRADE"
   | "ADD_EVENT_TITLE"
   | "ADD_EVENT_START"
   | "ADD_EVENT_DURATION"
@@ -193,6 +201,28 @@ function eventTypeKeyboard(): InlineKeyboardMarkup {
   return {
     inline_keyboard: [
       ...EVENT_TYPES.map(([value, label]) => [{ text: label, callback_data: `calendar:type:${value}` }]),
+      [{ text: "Batal", callback_data: "flow:cancel" }],
+    ],
+  };
+}
+
+function gradeKeyboard(): InlineKeyboardMarkup {
+  return {
+    inline_keyboard: [
+      [
+        { text: "A", callback_data: "gpa:grade:A" },
+        { text: "AB", callback_data: "gpa:grade:AB" },
+      ],
+      [
+        { text: "B", callback_data: "gpa:grade:B" },
+        { text: "BC", callback_data: "gpa:grade:BC" },
+      ],
+      [
+        { text: "C", callback_data: "gpa:grade:C" },
+        { text: "D", callback_data: "gpa:grade:D" },
+        { text: "E", callback_data: "gpa:grade:E" },
+      ],
+      [{ text: "Belum Ada Nilai", callback_data: "gpa:grade:SKIP" }],
       [{ text: "Batal", callback_data: "flow:cancel" }],
     ],
   };
@@ -609,11 +639,12 @@ async function sendHabits(chatId: string, userId: string) {
           const done = habit.logs.length > 0 ? "Selesai" : "Belum";
           return `${index + 1}. ${escapeHtml(habit.name)} - ${done}`;
         })
-      : ["Belum ada habit. Tambahkan dari web Student Life OS dulu."]),
+      : ["Belum ada habit. Anda bisa tambah habit baru langsung dari bot."]),
   ];
 
   await sendMessage(chatId, lines.join("\n"), {
     inline_keyboard: [
+      [{ text: "+ Habit Baru", callback_data: "habits:add" }],
       ...habits.map((habit) => [
         {
           text: `${habit.logs.length > 0 ? "Batalkan" : "Selesai"}: ${habit.name}`.slice(0, 60),
@@ -725,7 +756,12 @@ async function sendGpa(chatId: string, userId: string) {
       "",
       `Skala nilai aktif: ${Object.keys(GRADE_MAP).join(", ")}`,
     ].join("\n"),
-    mainMenuKeyboard()
+    {
+      inline_keyboard: [
+        [{ text: "+ Mata Kuliah", callback_data: "gpa:add" }],
+        [{ text: "Menu Utama", callback_data: "menu:main" }],
+      ],
+    }
   );
 }
 
@@ -803,6 +839,74 @@ async function handleStudySession(chatId: string, telegramUserId: string, userId
     });
     await clearSession(telegramUserId, chatId);
     await sendMessage(chatId, `Sesi belajar tersimpan: ${escapeHtml(data.subject)} selama ${duration} menit.`, mainMenuKeyboard());
+  }
+}
+
+async function handleHabitSession(chatId: string, telegramUserId: string, userId: string, text: string) {
+  const name = text.trim().slice(0, 100);
+  if (!name) {
+    await sendMessage(chatId, "Nama habit tidak boleh kosong.", cancelKeyboard());
+    return;
+  }
+
+  await prisma.habit.create({
+    data: {
+      userId,
+      name,
+      color: "#6366f1",
+    },
+  });
+
+  await clearSession(telegramUserId, chatId);
+  await sendMessage(chatId, `Habit baru tersimpan: <b>${escapeHtml(name)}</b>.`);
+  await sendHabits(chatId, userId);
+}
+
+async function handleCourseSession(
+  chatId: string,
+  telegramUserId: string,
+  state: SessionState,
+  data: TelegramSessionData,
+  text: string
+) {
+  if (state === "ADD_COURSE_NAME") {
+    const courseName = text.trim().slice(0, 200);
+    if (!courseName) {
+      await sendMessage(chatId, "Nama mata kuliah tidak boleh kosong.", cancelKeyboard());
+      return;
+    }
+
+    await setSession(telegramUserId, chatId, "ADD_COURSE_CREDITS", { ...data, courseName });
+    await sendMessage(chatId, "Berapa SKS mata kuliah ini? Contoh: 3", cancelKeyboard());
+    return;
+  }
+
+  if (state === "ADD_COURSE_CREDITS") {
+    const courseCredits = Number(text.replace(/[^\d]/g, ""));
+    if (!Number.isInteger(courseCredits) || courseCredits < 1 || courseCredits > 12) {
+      await sendMessage(chatId, "SKS tidak valid. Isi angka 1 sampai 12.", cancelKeyboard());
+      return;
+    }
+
+    await setSession(telegramUserId, chatId, "ADD_COURSE_SEMESTER", { ...data, courseCredits });
+    await sendMessage(chatId, "Semester berapa? Contoh: 4", cancelKeyboard());
+    return;
+  }
+
+  if (state === "ADD_COURSE_SEMESTER") {
+    const courseSemester = Number(text.replace(/[^\d]/g, ""));
+    if (!Number.isInteger(courseSemester) || courseSemester < 1 || courseSemester > 14) {
+      await sendMessage(chatId, "Semester tidak valid. Isi angka 1 sampai 14.", cancelKeyboard());
+      return;
+    }
+
+    await setSession(telegramUserId, chatId, "ADD_COURSE_GRADE", { ...data, courseSemester });
+    await sendMessage(chatId, "Pilih nilai mata kuliah:", gradeKeyboard());
+    return;
+  }
+
+  if (state === "ADD_COURSE_GRADE") {
+    await sendMessage(chatId, "Pilih nilai lewat tombol di bawah ini.", gradeKeyboard());
   }
 }
 
@@ -953,6 +1057,21 @@ async function handleSessionText(chatId: string, telegramUserId: string, userId:
 
   if (state === "ADD_STUDY_SUBJECT" || state === "ADD_STUDY_DURATION") {
     await handleStudySession(chatId, telegramUserId, userId, state, text);
+    return true;
+  }
+
+  if (state === "ADD_HABIT_NAME") {
+    await handleHabitSession(chatId, telegramUserId, userId, text);
+    return true;
+  }
+
+  if (
+    state === "ADD_COURSE_NAME" ||
+    state === "ADD_COURSE_CREDITS" ||
+    state === "ADD_COURSE_SEMESTER" ||
+    state === "ADD_COURSE_GRADE"
+  ) {
+    await handleCourseSession(chatId, telegramUserId, state, data, text);
     return true;
   }
 
@@ -1117,6 +1236,79 @@ async function handleCallback(callback: TelegramCallbackQuery) {
   if (data === "calendar:add") {
     await setSession(telegramUserId, chatId, "ADD_EVENT_TITLE");
     await sendMessage(chatId, "Tulis judul jadwal baru:", cancelKeyboard());
+    return;
+  }
+
+  if (data === "habits:add") {
+    await setSession(telegramUserId, chatId, "ADD_HABIT_NAME");
+    await sendMessage(chatId, "Tulis nama habit baru:", cancelKeyboard());
+    return;
+  }
+
+  if (data === "gpa:add") {
+    await setSession(telegramUserId, chatId, "ADD_COURSE_NAME");
+    await sendMessage(chatId, "Tulis nama mata kuliah:", cancelKeyboard());
+    return;
+  }
+
+  if (data.startsWith("gpa:grade:")) {
+    const gradeValue = data.replace("gpa:grade:", "");
+    const grade = gradeValue === "SKIP" ? null : gradeValue;
+    const session = await getSession(telegramUserId);
+    const sessionData = (session?.data ?? {}) as TelegramSessionData;
+
+    if (!sessionData.courseName || !sessionData.courseCredits || !sessionData.courseSemester) {
+      await clearSession(telegramUserId, chatId);
+      await sendMessage(chatId, "Sesi tambah mata kuliah kedaluwarsa. Silakan ulangi.", mainMenuKeyboard());
+      return;
+    }
+
+    if (grade && !Object.prototype.hasOwnProperty.call(GRADE_MAP, grade)) {
+      await sendMessage(chatId, "Nilai tidak valid. Silakan pilih nilai dari tombol.", gradeKeyboard());
+      return;
+    }
+
+    const existingCourse = await prisma.course.findFirst({
+      where: {
+        userId: account.userId,
+        name: { equals: sessionData.courseName, mode: "insensitive" },
+      },
+    });
+
+    if (existingCourse) {
+      await clearSession(telegramUserId, chatId);
+      await sendMessage(
+        chatId,
+        "Mata kuliah dengan nama itu sudah ada. Ubah dari web jika ingin memperbarui nilainya.",
+        mainMenuKeyboard()
+      );
+      return;
+    }
+
+    await prisma.course.create({
+      data: {
+        userId: account.userId,
+        name: sessionData.courseName,
+        credits: sessionData.courseCredits,
+        semester: sessionData.courseSemester,
+        grade,
+        gradePoint: grade ? GRADE_MAP[grade] : null,
+      },
+    });
+
+    await clearSession(telegramUserId, chatId);
+    await sendMessage(
+      chatId,
+      [
+        "Mata kuliah tersimpan.",
+        "",
+        `Nama: <b>${escapeHtml(sessionData.courseName)}</b>`,
+        `SKS: ${sessionData.courseCredits}`,
+        `Semester: ${sessionData.courseSemester}`,
+        `Nilai: ${grade ?? "Belum ada"}`,
+      ].join("\n")
+    );
+    await sendGpa(chatId, account.userId);
     return;
   }
 
