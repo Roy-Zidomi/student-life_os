@@ -32,6 +32,8 @@ model User {
   courses       Course[]
   wishlist      WishlistItem[]
   debts         Debt[]
+  telegramAccount TelegramAccount?
+  telegramLinkCodes TelegramLinkCode[]
 
   @@index([clerkId])
 }
@@ -251,4 +253,49 @@ model Debt {
   updatedAt   DateTime @updatedAt
 
   @@index([userId])
+}
+
+// ==========================================
+// TELEGRAM BOT INTEGRATION
+// ==========================================
+model TelegramAccount {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  telegramUserId String   @unique
+  chatId         String   @unique
+  username       String?
+  firstName      String?
+  lastName       String?
+  languageCode   String?
+  linkedAt       DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([telegramUserId])
+  @@index([chatId])
+}
+
+model TelegramLinkCode {
+  id        String    @id @default(cuid())
+  code      String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model TelegramBotSession {
+  telegramUserId String   @id
+  chatId         String
+  state          String   @default("IDLE")
+  data           Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([chatId])
+  @@index([updatedAt])
 }

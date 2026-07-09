@@ -1,11 +1,15 @@
 import { Metadata } from "next";
 import { getCurrentUser } from "@/lib/user";
 import { SettingsClient } from "./settings-client";
+import { getTelegramLinkStatus } from "@/actions/user.actions";
 
 export const metadata: Metadata = { title: "Pengaturan" };
 
 export default async function SettingsPage() {
-  const dbUser = await getCurrentUser();
+  const [dbUser, telegramStatus] = await Promise.all([
+    getCurrentUser(),
+    getTelegramLinkStatus(),
+  ]);
 
   const initialUser = dbUser
     ? {
@@ -14,5 +18,5 @@ export default async function SettingsPage() {
       }
     : null;
 
-  return <SettingsClient initialUser={initialUser} />;
+  return <SettingsClient initialUser={initialUser} initialTelegramStatus={telegramStatus} />;
 }
